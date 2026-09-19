@@ -196,7 +196,7 @@ function screenTitle() {
       <div class="hero">
         <h1 class="hero__mark">
           <span>برا</span>
-          <span><em>السالفة</em></span>
+          <span>السالفة</span>
         </h1>
         <div class="hero__rule"></div>
         <p class="hero__tag">
@@ -652,7 +652,10 @@ function startRound() {
 
   game.votes = {};
   game.revealIndex = 0;
+  game.revealStage = "cover";
+  game.cardFlipped = false;
   game.voteIndex = 0;
+  game.voteStage = "cover";
 
   state.screen = "reveal";
   render();

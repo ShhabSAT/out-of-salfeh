@@ -300,16 +300,31 @@ select {
   font-size: clamp(3.4rem, 16vw, 6.5rem);
   line-height: 0.95;
   letter-spacing: -0.01em;
-  text-shadow: 0 6px 0 rgba(0, 0, 0, 0.22);
+  background: linear-gradient(
+    175deg,
+    var(--cloud) 0%,
+    var(--cloud) 55%,
+    var(--sand) 130%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.22));
+}
+
+[data-theme="light"] .hero__mark {
+  background: linear-gradient(
+    175deg,
+    var(--plum-900) 0%,
+    var(--plum-900) 55%,
+    var(--coral) 135%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 .hero__mark span {
   display: block;
-}
-
-.hero__mark em {
-  font-style: normal;
-  color: var(--coral);
 }
 
 .hero__rule {
@@ -999,6 +1014,19 @@ select {
 
   .btn-row > .btn {
     flex-basis: 100%;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  .scoreboard th,
+  .scoreboard td {
+    padding: 10px 6px;
+  }
+
+  .scoreboard__total {
+    font-size: 1.1rem;
   }
 }
 
