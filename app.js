@@ -941,9 +941,463 @@ function screenDiscussion() {
   `);
 }
 
-/* Placeholder until M5 wires the real voting flow. */
+/* --------------------------------------------------------------------------
+   Voting phase (tasks.md 4.5)
+   -------------------------------------------------------------------------- */
+
+function passCover({ title, player, action, progress, note }) {
+  return el(`
+    <section class="screen">
+      ${topbar({
+        title,
+        right: progress
+          ? `<span class="chip">${progress}</span>`
+          : "",
+      })}
+      <div class="cover">
+        <div class="cover__icon" aria-hidden="true">📱</div>
+        <p class="cover__text">مرّر الجهاز إلى</p>
+        <h2 class="cover__name">${escapeHtml(player.name)}</h2>
+        <p class="cover__text">${escapeHtml(note)}</p>
+        <button class="btn btn--primary btn--lg" data-action="${action}">
+          جاهز
+        </button>
+      </div>
+    </section>
+  `);
+}
+
 function startVoting() {
-  showToast("التصويت يجي بعد شوي…");
+  stopTimer();
+  const game = state.game;
+  game.votes = {};
+  game.voteIndex = 0;
+  game.voteStage = "cover";
+  game.voteSelection = null;
+  state.screen = "vote";
+  render();
+}
+
+function screenVoteCover() {
+  const game = state.game;
+  const voter = game.players[game.voteIndex];
+  return passCover({
+    title: "التصويت السري",
+    player: voter,
+    action: "vote-ready",
+    progress: `${game.voteIndex + 1} / ${game.players.length}`,
+    note: "لا تضغط إلا لما يوصل الجهاز بيدك — صوتك محد يشوفه.",
+  });
+}
+
+function screenVote() {
+  const game = state.game;
+  const voter = game.players[game.voteIndex];
+  const options = game.players
+    .filter((player) => player.id !== voter.id)
+    .map((player) => {
+      const selected = game.voteSelection === player.id;
+      return `
+        <button
+          type="button"
+          class="vote-option"
+          data-action="vote-select"
+          data-target="${player.id}"
+          aria-pressed="${selected}"
+        >
+          <span>${escapeHtml(player.name)}</span>
+          <span class="vote-option__check" aria-hidden="true">✓</span>
+        </button>
+      `;
+    })
+    .join("");
+
+  return el(`
+    <section class="screen">
+      ${topbar({
+        title: `تصويت ${voter.name}`,
+        right: `<span class="chip">${game.voteIndex + 1} / ${game.players.length}</span>`,
+      })}
+      <div class="panel">
+        <div class="panel__head">
+          <h2 class="panel__title">مين برا السالفة؟</h2>
+          <p class="panel__hint">اختر لاعباً واحداً — صوتك سرّي.</p>
+        </div>
+        <div class="vote-list">${options}</div>
+      </div>
+      <button
+        id="vote-confirm"
+        class="btn btn--primary btn--lg btn--block"
+        data-action="vote-confirm"
+        ${game.voteSelection ? "" : "disabled"}
+      >
+        ثبّت صوتي
+      </button>
+    </section>
+  `);
+}
+
+function advanceVote() {
+  const game = state.game;
+  game.voteIndex += 1;
+  game.voteStage = "cover";
+  game.voteSelection = null;
+  if (game.voteIndex >= game.players.length) {
+    startGuessing();
+    return;
+  }
+  render();
+}
+
+/* --------------------------------------------------------------------------
+   Guess-the-secret phase (fair: happens before the public reveal)
+   -------------------------------------------------------------------------- */
+
+function startGuessing() {
+  const game = state.game;
+  game.guesses = {};
+  game.guessIndex = 0;
+  game.guessStage = "cover";
+  state.screen = "guess";
+  render();
+}
+
+function screenGuessCover() {
+  const game = state.game;
+  const player = game.players[game.guessIndex];
+  return passCover({
+    title: "تخمين السر",
+    player,
+    action: "guess-ready",
+    progress: `${game.guessIndex + 1} / ${game.players.length}`,
+    note: "فرصة أخيرة قبل كشف السر.",
+  });
+}
+
+function screenGuess() {
+  const game = state.game;
+  const player = game.players[game.guessIndex];
+  const isOut = game.outIds.includes(player.id);
+
+  if (!isOut) {
+    return el(`
+      <section class="screen">
+        ${topbar({
+          title: `دور ${player.name}`,
+          right: `<span class="chip">${game.guessIndex + 1} / ${game.players.length}</span>`,
+        })}
+        <div class="cover">
+          <div class="cover__icon" aria-hidden="true">✅</div>
+          <h2 class="cover__name">ما عليك تخمين</h2>
+          <p class="cover__text">
+            أنت داخل السالفة وتعرف السر — مرّر الجهاز لللي بعدك.
+          </p>
+          <button class="btn btn--mint btn--lg" data-action="guess-skip">
+            تم
+          </button>
+        </div>
+      </section>
+    `);
+  }
+
+  return el(`
+    <section class="screen">
+      ${topbar({
+        title: `تخمين ${player.name}`,
+        right: `<span class="chip">${game.guessIndex + 1} / ${game.players.length}</span>`,
+      })}
+      <div class="panel">
+        <div class="panel__head">
+          <h2 class="panel__title">أنت برا السالفة… وش السر؟</h2>
+          <p class="panel__hint">
+            خمّن العنصر اللي كان مع الباقين. تخمين صحيح = نقطة إضافية.
+          </p>
+        </div>
+        <div class="field">
+          <label class="field__label" for="guess-input">تخمينك</label>
+          <input
+            class="input"
+            id="guess-input"
+            type="text"
+            maxlength="40"
+            autocomplete="off"
+            placeholder="اكتب تخمينك هنا"
+          />
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn--primary" data-action="guess-submit">
+          أرسل التخمين
+        </button>
+        <button class="btn btn--outline" data-action="guess-skip">
+          تخطّى
+        </button>
+      </div>
+    </section>
+  `);
+}
+
+function advanceGuess() {
+  const game = state.game;
+  game.guessIndex += 1;
+  game.guessStage = "cover";
+  if (game.guessIndex >= game.players.length) {
+    computeResults();
+    state.screen = "results";
+    render();
+    return;
+  }
+  render();
+}
+
+/* --------------------------------------------------------------------------
+   Scoring & results (tasks.md 4.4)
+   -------------------------------------------------------------------------- */
+
+function normalizeArabic(value) {
+  return String(value == null ? "" : value)
+    .trim()
+    .toLowerCase()
+    .replace(/[\u064B-\u0652\u0640]/g, "")
+    .replace(/[أإآٱ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/[ىي]/g, "ي")
+    .replace(/ؤ/g, "و")
+    .replace(/ئ/g, "ي")
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .replace(/\s+/g, " ");
+}
+
+function sameSet(a, b) {
+  if (a.length !== b.length) return false;
+  const set = new Set(b);
+  return a.every((id) => set.has(id));
+}
+
+function computeResults() {
+  const game = state.game;
+  const scoring = GAME_DEFAULTS.scoring;
+  const outSet = new Set(game.outIds);
+
+  const counts = {};
+  game.players.forEach((player) => {
+    counts[player.id] = 0;
+  });
+  Object.values(game.votes).forEach((target) => {
+    if (counts[target] != null) counts[target] += 1;
+  });
+
+  const topCount = Math.max(0, ...Object.values(counts));
+  const topIds = game.players
+    .filter((player) => counts[player.id] === topCount && topCount > 0)
+    .map((player) => player.id);
+
+  const decisive =
+    topCount > 0 && topIds.length === state.setup.numOut;
+  const matched = decisive && sameSet(topIds, game.outIds);
+
+  const caught = new Set();
+  if (matched) {
+    game.outIds.forEach((id) => caught.add(id));
+  } else if (decisive) {
+    topIds.forEach((id) => {
+      if (outSet.has(id)) caught.add(id);
+    });
+  }
+
+  const delta = {};
+  const reasons = {};
+  game.players.forEach((player) => {
+    delta[player.id] = 0;
+    reasons[player.id] = [];
+  });
+  const add = (id, points, label) => {
+    delta[id] += points;
+    reasons[id].push(label);
+  };
+
+  const correctVoters = [];
+  if (matched) {
+    game.players.forEach((voter) => {
+      if (outSet.has(game.votes[voter.id])) {
+        correctVoters.push(voter.id);
+        add(voter.id, scoring.correctVote, "صوّت صح");
+      }
+    });
+  }
+
+  const escaped = [];
+  game.outIds.forEach((id) => {
+    if (!caught.has(id)) {
+      escaped.push(id);
+      add(id, scoring.outEscaped, "نجا من التصويت");
+    }
+  });
+
+  const guessers = [];
+  game.outIds.forEach((id) => {
+    const guess = game.guesses[id];
+    if (guess && normalizeArabic(guess) === normalizeArabic(game.secret.item)) {
+      guessers.push(id);
+      add(id, scoring.outGuessedItemBonus, "عرف السر");
+    }
+  });
+
+  game.players.forEach((player) => {
+    player.score += delta[player.id];
+  });
+
+  let verdict;
+  if (matched) {
+    verdict = "كشفوهم! تصويتكم طابخ على اللي برا السالفة.";
+  } else if (!decisive) {
+    verdict = "تعادل بالأصوات — ما طلع أحد هالجولة، واللي برا السالفة نجوا.";
+  } else {
+    verdict = "التصويت طلع برا السكة — اللي برا السالفة نجوا بجلدهم.";
+  }
+
+  game.result = {
+    counts,
+    topCount,
+    topIds,
+    decisive,
+    matched,
+    caught: [...caught],
+    escaped,
+    correctVoters,
+    guessers,
+    delta,
+    reasons,
+    verdict,
+  };
+}
+
+function scoreboardRows(game, withRoundDelta) {
+  const sorted = game.players
+    .slice()
+    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, "ar"));
+  const leaderScore = sorted.length ? sorted[0].score : 0;
+  return sorted
+    .map((player, index) => {
+      const delta = withRoundDelta ? game.result.delta[player.id] : 0;
+      const deltaText =
+        delta > 0
+          ? `<span class="points-pos">+${delta}</span>`
+          : `<span class="points-zero">٠</span>`;
+      const leader =
+        player.score === leaderScore && leaderScore > 0 ? "score-leader" : "";
+      return `
+        <tr class="${leader}">
+          <td class="scoreboard__rank">${index + 1}</td>
+          <td class="scoreboard__name">${escapeHtml(player.name)}</td>
+          ${
+            withRoundDelta
+              ? `<td>${deltaText}</td>`
+              : ""
+          }
+          <td class="scoreboard__total">${player.score}</td>
+        </tr>
+      `;
+    })
+    .join("");
+}
+
+function screenResults() {
+  const game = state.game;
+  const result = game.result;
+  const outNames = game.outIds
+    .map((id) => escapeHtml(maskName(id)))
+    .join("، ");
+
+  const summary = game.players
+    .filter((player) => result.reasons[player.id].length > 0)
+    .map((player) => {
+      const list = result.reasons[player.id].join("، ");
+      const total = result.delta[player.id];
+      return `
+        <li class="turn-item">
+          <span class="turn-item__num" aria-hidden="true">+${total}</span>
+          <span class="turn-item__text">
+            <b>${escapeHtml(player.name)}</b>
+            <span class="field__hint">${escapeHtml(list)}</span>
+          </span>
+        </li>
+      `;
+    })
+    .join("");
+
+  return el(`
+    <section class="screen screen--wide">
+      ${topbar({
+        title: "النتيجة",
+        right: `<span class="chip">الجولة ${game.round}</span>`,
+      })}
+      <div class="result-banner">
+        <span class="result-banner__label">برا السالفة كانوا</span>
+        <span class="result-banner__names">${outNames}</span>
+        <span class="result-secret">
+          <span class="result-banner__label">السر:</span>
+          <span class="result-secret__value">${escapeHtml(game.secret.item)}</span>
+          <span class="field__hint">(${escapeHtml(game.secret.categoryLabel)})</span>
+        </span>
+      </div>
+      <div class="verdict">${escapeHtml(result.verdict)}</div>
+      ${
+        summary
+          ? `
+        <div class="panel">
+          <div class="panel__head">
+            <h2 class="panel__title">نقاط هالجولة</h2>
+          </div>
+          <ul class="turn-list">${summary}</ul>
+        </div>
+      `
+          : ""
+      }
+      <div class="panel">
+        <div class="panel__head">
+          <h2 class="panel__title">لوحة النقاط</h2>
+        </div>
+        <table class="scoreboard">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>اللاعب</th>
+              <th>هالجولة</th>
+              <th>المجموع</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${scoreboardRows(game, true)}
+          </tbody>
+        </table>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn--primary btn--lg" data-action="next-round">
+          الجولة التالية
+        </button>
+        <button class="btn btn--outline btn--lg" data-action="new-game">
+          لعبة جديدة
+        </button>
+      </div>
+    </section>
+  `);
+}
+
+function nextRound() {
+  const game = state.game;
+  game.round += 1;
+  startRound();
+}
+
+function newGame() {
+  if (timerHandle) {
+    clearInterval(timerHandle);
+    timerHandle = null;
+  }
+  state.game = null;
+  state.screen = "setup";
+  render();
 }
 
 /* --------------------------------------------------------------------------
@@ -963,6 +1417,17 @@ function render() {
       break;
     case "discussion":
       view = screenDiscussion();
+      break;
+    case "vote":
+      view =
+        state.game.voteStage === "cover" ? screenVoteCover() : screenVote();
+      break;
+    case "guess":
+      view =
+        state.game.guessStage === "cover" ? screenGuessCover() : screenGuess();
+      break;
+    case "results":
+      view = screenResults();
       break;
     case "title":
     default:
@@ -1048,7 +1513,11 @@ document.addEventListener("click", (event) => {
       break;
     case "flip-card": {
       if (!state.game || state.game.cardFlipped) break;
+      const player = state.game.players[state.game.revealIndex];
+      const isOut = state.game.outIds.includes(player.id);
       state.game.cardFlipped = true;
+      const back = trigger.querySelector(".flip-card__face--back");
+      if (back) back.innerHTML = cardBackHtml(isOut);
       trigger.classList.add("is-flipped");
       const done = document.getElementById("reveal-done");
       if (done) done.hidden = false;
@@ -1072,6 +1541,51 @@ document.addEventListener("click", (event) => {
       break;
     case "go-vote":
       startVoting();
+      break;
+    case "vote-ready":
+      state.game.voteStage = "vote";
+      render();
+      break;
+    case "vote-select": {
+      state.game.voteSelection = trigger.dataset.target;
+      document
+        .querySelectorAll('[data-action="vote-select"]')
+        .forEach((option) =>
+          option.setAttribute(
+            "aria-pressed",
+            option === trigger ? "true" : "false"
+          )
+        );
+      const confirm = document.getElementById("vote-confirm");
+      if (confirm) confirm.disabled = false;
+      break;
+    }
+    case "vote-confirm":
+      if (state.game.voteSelection) {
+        state.game.votes[state.game.players[state.game.voteIndex].id] =
+          state.game.voteSelection;
+        advanceVote();
+      }
+      break;
+    case "guess-ready":
+      state.game.guessStage = "guess";
+      render();
+      break;
+    case "guess-submit": {
+      const input = document.getElementById("guess-input");
+      state.game.guesses[state.game.players[state.game.guessIndex].id] =
+        input ? input.value : "";
+      advanceGuess();
+      break;
+    }
+    case "guess-skip":
+      advanceGuess();
+      break;
+    case "next-round":
+      nextRound();
+      break;
+    case "new-game":
+      newGame();
       break;
     default:
       break;
