@@ -222,8 +222,8 @@ const GAME_DEFAULTS = {
   maxPlayers: 10,
   outPlayersDefault: 1,
   outPlayersMaxThreshold: 6,
-  discussionSeconds: 180,
-  turnsPerPlayer: 2,
+  perQuestionSeconds: 60,
+  turnsPerPlayer: 1,
   scoring: {
     correctVote: 1,
     outEscaped: 2,

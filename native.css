@@ -1,0 +1,40 @@
+/* ==========================================================================
+   برا السالفة — native app feel
+   Browser suppression, touch handling, scrollbar, spinners.
+   ========================================================================== */
+
+html {
+  touch-action: manipulation;
+  overscroll-behavior: none;
+}
+
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input::-webkit-inner-spin-button,
+input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.app {
+  -webkit-overflow-scrolling: touch;
+}

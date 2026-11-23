@@ -15,7 +15,7 @@ function defaultSetup() {
     names: ["", "", ""],
     categoryIds: [],
     numOut: GAME_DEFAULTS.outPlayersDefault,
-    discussionSeconds: GAME_DEFAULTS.discussionSeconds,
+    perQuestionSeconds: GAME_DEFAULTS.perQuestionSeconds,
   };
 }
 
@@ -48,6 +48,10 @@ function el(html) {
 
 function randomChoice(list) {
   return list[Math.floor(Math.random() * list.length)];
+}
+
+function haptic(pattern) {
+  if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(pattern || 10);
 }
 
 function shuffle(list) {
@@ -134,7 +138,7 @@ function applyTheme() {
   document.documentElement.setAttribute("data-theme", state.theme);
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) {
-    meta.setAttribute("content", state.theme === "light" ? "#F7F3ED" : "#201933");
+    meta.setAttribute("content", state.theme === "light" ? "#F5E6C8" : "#0F1923");
   }
 }
 
@@ -253,7 +257,7 @@ function loadSetup() {
     ? saved.categoryIds.filter((id) => CATEGORY_BY_ID[id])
     : [];
 
-  const seconds = Number(saved.discussionSeconds);
+  const perQuestion = Number(saved.perQuestionSeconds);
   const numOut = Number(saved.numOut);
 
   state.setup = {
@@ -263,10 +267,10 @@ function loadSetup() {
         : defaultSetup().names,
     categoryIds: validIds,
     numOut: numOut === 2 ? 2 : 1,
-    discussionSeconds:
-      Number.isFinite(seconds) && seconds >= 0
-        ? seconds
-        : GAME_DEFAULTS.discussionSeconds,
+    perQuestionSeconds:
+      Number.isFinite(perQuestion) && perQuestion >= 0
+        ? perQuestion
+        : GAME_DEFAULTS.perQuestionSeconds,
   };
 }
 
@@ -308,12 +312,12 @@ function captureSetupForm() {
     const index = Number(input.dataset.index);
     if (!Number.isNaN(index)) state.setup.names[index] = input.value;
   });
-  const minutes = document.querySelector('[data-field="discussion-minutes"]');
-  if (minutes) {
-    const value = Number(minutes.value);
-    state.setup.discussionSeconds = Number.isFinite(value)
-      ? Math.max(0, Math.min(15, value)) * 60
-      : GAME_DEFAULTS.discussionSeconds;
+  const seconds = document.querySelector('[data-field="per-question-seconds"]');
+  if (seconds) {
+    const value = Number(seconds.value);
+    state.setup.perQuestionSeconds = Number.isFinite(value)
+      ? Math.max(0, Math.min(300, value))
+      : GAME_DEFAULTS.perQuestionSeconds;
   }
 }
 
@@ -420,18 +424,20 @@ function screenSetup() {
           ${outSegmented()}
         </div>
         <div class="field">
-          <label class="field__label" for="discussion-minutes">مدة النقاش (دقائق)</label>
+          <label class="field__label" for="per-question-seconds">مدة كل سؤال (ثواني)</label>
           <input
             class="input"
-            id="discussion-minutes"
+            id="per-question-seconds"
             type="number"
-            data-field="discussion-minutes"
+            data-field="per-question-seconds"
             min="0"
-            max="15"
-            step="1"
-            value="${Math.round(state.setup.discussionSeconds / 60)}"
+            max="300"
+            step="5"
+            value="${state.setup.perQuestionSeconds}"
           />
-          <span class="field__hint">اكتب ٠ لإلغاء المؤقت.</span>
+          <span class="field__hint">
+            كل لاعب ياخذ دوره بالسؤال، والمؤقت ينتقل تلقائياً للي بعده. اكتب ٠ لإلغاء المؤقت.
+          </span>
         </div>
       </div>
 
@@ -600,10 +606,40 @@ function runFairnessSelfCheck() {
 function startGame() {
   captureSetupForm();
   saveSetup();
+
+  /* Inline validation */
+  var hasErrors = false;
+  document.querySelectorAll('[data-field="player-name"]').forEach(function (input) {
+    var idx = Number(input.dataset.index);
+    var val = (state.setup.names[idx] || "").trim();
+    if (!val) {
+      input.classList.add("input--error");
+      hasErrors = true;
+    } else {
+      input.classList.remove("input--error");
+    }
+  });
+  if (state.setup.categoryIds.length === 0) {
+    var grid = document.querySelector(".category-grid");
+    if (grid) {
+      grid.style.outline = "2px solid var(--coral)";
+      grid.style.borderRadius = "var(--radius-sm)";
+      setTimeout(function () { grid.style.outline = ""; }, 1500);
+    }
+    hasErrors = true;
+  }
+  if (hasErrors) {
+    showToast("كمّل الأسماء واختر فئة أولاً");
+    return;
+  }
+
   if (!setupIsValid()) {
     showToast("كمّل الأسماء واختر فئة أولاً");
     return;
   }
+
+  var startBtn = document.getElementById("start-round");
+  if (startBtn) startBtn.classList.add("btn--loading");
 
   const names = filledNames();
   state.game = {
@@ -656,6 +692,8 @@ function startRound() {
   game.cardFlipped = false;
   game.voteIndex = 0;
   game.voteStage = "cover";
+  game.turnIndex = 0;
+  resetTurnTimer();
 
   state.screen = "reveal";
   render();
@@ -791,8 +829,9 @@ function advanceReveal() {
 
   if (game.revealIndex >= game.players.length) {
     state.screen = "discussion";
-    resetTimerToSetup();
+    resetTurnTimer();
     render();
+    startTurnTimer();
     return;
   }
   render();
@@ -811,28 +850,30 @@ function formatTime(seconds) {
   return minutes + ":" + secs;
 }
 
-function resetTimerToSetup() {
+function resetTurnTimer() {
   const game = state.game;
   if (!game) return;
   if (timerHandle) {
     clearInterval(timerHandle);
     timerHandle = null;
   }
-  game.timerRemaining = state.setup.discussionSeconds;
-  game.timerRunning = false;
+  game.turnTimerRemaining = state.setup.perQuestionSeconds;
+  game.turnTimerRunning = false;
 }
 
-function startTimer() {
+function startTurnTimer() {
   const game = state.game;
-  if (!game || game.timerRunning || game.timerRemaining <= 0) return;
-  game.timerRunning = true;
-  timerHandle = setInterval(tickTimer, 1000);
+  if (!game) return;
+  if (state.setup.perQuestionSeconds <= 0) return;
+  if (game.turnTimerRunning || game.turnTimerRemaining <= 0) return;
+  game.turnTimerRunning = true;
+  timerHandle = setInterval(tickTurnTimer, 1000);
   updateTimerDisplay();
 }
 
-function stopTimer() {
+function stopTurnTimer() {
   const game = state.game;
-  if (game) game.timerRunning = false;
+  if (game) game.turnTimerRunning = false;
   if (timerHandle) {
     clearInterval(timerHandle);
     timerHandle = null;
@@ -840,17 +881,17 @@ function stopTimer() {
   updateTimerDisplay();
 }
 
-function tickTimer() {
+function tickTurnTimer() {
   const game = state.game;
   if (!game || state.screen !== "discussion") {
-    stopTimer();
+    stopTurnTimer();
     return;
   }
-  game.timerRemaining = Math.max(0, game.timerRemaining - 1);
+  game.turnTimerRemaining = Math.max(0, game.turnTimerRemaining - 1);
   updateTimerDisplay();
-  if (game.timerRemaining === 0) {
-    stopTimer();
-    showToast("خلص الوقت! يلا نصوّت");
+  if (game.turnTimerRemaining === 0) {
+    stopTurnTimer();
+    advanceTurn();
   }
 }
 
@@ -858,87 +899,93 @@ function updateTimerDisplay() {
   const game = state.game;
   const display = document.getElementById("timer-display");
   if (!game || !display) return;
-  display.textContent = formatTime(game.timerRemaining || 0);
+  display.textContent = formatTime(game.turnTimerRemaining || 0);
   display.classList.toggle(
     "is-low",
-    game.timerRemaining <= 30 && game.timerRemaining > 0
+    game.turnTimerRemaining <= 10 && game.turnTimerRemaining > 0
   );
-  display.classList.toggle("is-done", game.timerRemaining <= 0);
+  display.classList.toggle("is-done", game.turnTimerRemaining <= 0);
+}
 
-  const toggle = document.getElementById("timer-toggle");
-  if (toggle) {
-    toggle.textContent = game.timerRunning ? "إيقاف مؤقت" : "تشغيل";
-    toggle.disabled = game.timerRemaining <= 0;
+function currentTurn() {
+  const game = state.game;
+  if (!game || !game.turnOrder) return null;
+  return game.turnOrder[game.turnIndex] || null;
+}
+
+function advanceTurn() {
+  const game = state.game;
+  if (!game) return;
+  stopTurnTimer();
+  game.turnIndex += 1;
+  if (game.turnIndex >= game.turnOrder.length) {
+    startVoting();
+    return;
   }
+  resetTurnTimer();
+  render();
+  startTurnTimer();
 }
 
 function screenDiscussion() {
   const game = state.game;
-  const hasTimer = state.setup.discussionSeconds > 0;
+  const turn = currentTurn();
+  if (!turn) {
+    startVoting();
+    return screenTitle();
+  }
 
-  const turns = game.turnOrder
-    .map((turn, index) => {
-      const asker = playerById(turn.asker);
-      const answerer = playerById(turn.answerer);
-      return `
-        <li class="turn-item">
-          <span class="turn-item__num" aria-hidden="true">${index + 1}</span>
-          <span class="turn-item__text">
-            <b>${escapeHtml(asker ? asker.name : "؟")}</b> يسأل
-            <i>${escapeHtml(answerer ? answerer.name : "؟")}</i>
-          </span>
-        </li>
-      `;
-    })
-    .join("");
+  const asker = playerById(turn.asker);
+  const answerer = playerById(turn.answerer);
+  const total = game.turnOrder.length;
+  const hasTimer = state.setup.perQuestionSeconds > 0;
 
   return el(`
-    <section class="screen screen--wide">
+    <section class="screen">
       ${topbar({
         title: "وقت السوالف",
-        right: `<span class="chip">الجولة ${game.round}</span>`,
+        right: `<span class="chip">السؤال ${game.turnIndex + 1} / ${total}</span>`,
       })}
       ${
         game.reshuffled
           ? `<div class="note">خلصت كل عناصر الفئات المختارة، فتم خلط الأسرار من جديد.</div>`
           : ""
       }
+      <div class="turn-focus">
+        <p class="turn-focus__kicker">دور السؤال</p>
+        <div class="turn-focus__line">
+          <span class="turn-focus__name turn-focus__name--ask">${escapeHtml(
+            asker ? asker.name : "؟"
+          )}</span>
+          <span class="turn-focus__verb">يسأل</span>
+          <span class="turn-focus__name turn-focus__name--answer">${escapeHtml(
+            answerer ? answerer.name : "؟"
+          )}</span>
+        </div>
+        <p class="turn-focus__hint">
+          اسأله سؤالاً واحداً، وخلّ الباقين يسمعون ويحاولون يعرفون السر.
+        </p>
+      </div>
       ${
         hasTimer
           ? `
         <div class="panel timer">
           <div
             id="timer-display"
-            class="timer__display"
+            class="timer__display timer__display--question"
             role="timer"
             aria-live="off"
-          >${formatTime(game.timerRemaining || state.setup.discussionSeconds)}</div>
-          <div class="btn-row" style="width:100%">
-            <button
-              id="timer-toggle"
-              class="btn btn--sand"
-              data-action="timer-toggle"
-            >${game.timerRunning ? "إيقاف مؤقت" : "تشغيل"}</button>
-            <button class="btn btn--outline" data-action="timer-reset">تصفير</button>
-          </div>
+          >${formatTime(game.turnTimerRemaining || state.setup.perQuestionSeconds)}</div>
+          <p class="field__hint centered">ينتقل تلقائياً للي بعده لما يخلص الوقت.</p>
         </div>
       `
-          : `<div class="note">النقاش بدون مؤقت — خذوا وقتكم.</div>`
+          : `<div class="note">بدون مؤقت — خلّص سؤالك واضغط "تم، التالي".</div>`
       }
-      <div class="panel">
-        <div class="panel__head">
-          <h2 class="panel__title">ترتيب الأسئلة</h2>
-          <p class="panel__hint">
-            واحد يسأل وواحد يجاوب بالترتيب — عشان الكل ياخذ دوره بالسؤال
-            والجواب.
-          </p>
-        </div>
-        <ol class="turn-list">
-          ${turns}
-        </ol>
-      </div>
-      <button class="btn btn--primary btn--lg btn--block" data-action="go-vote">
-        خلصنا، يلا نصوّت
+      <button class="btn btn--primary btn--lg btn--block" data-action="turn-next">
+        تم، التالي
+      </button>
+      <button class="btn btn--outline btn--block" data-action="go-vote">
+        تخطّى للتصويت
       </button>
     </section>
   `);
@@ -971,7 +1018,7 @@ function passCover({ title, player, action, progress, note }) {
 }
 
 function startVoting() {
-  stopTimer();
+  stopTurnTimer();
   const game = state.game;
   game.votes = {};
   game.voteIndex = 0;
@@ -1333,7 +1380,9 @@ function screenResults() {
     <section class="screen screen--wide">
       ${topbar({
         title: "النتيجة",
-        right: `<span class="chip">الجولة ${game.round}</span>`,
+        right: `<span class="chip">الجولة ${game.round}</span>
+                <button class="btn btn--icon" data-action="share-results" aria-label="مشاركة" title="مشاركة">↗</button>
+                <button class="btn btn--icon" data-action="copy-scoreboard" aria-label="نسخ" title="نسخ لوحة النقاط">📋</button>`,
       })}
       <div class="result-banner">
         <span class="result-banner__label">برا السالفة كانوا</span>
@@ -1409,38 +1458,45 @@ function newGame() {
 
 function render() {
   if (!root) return;
-  root.innerHTML = "";
-  let view;
-  switch (state.screen) {
-    case "setup":
-      view = screenSetup();
-      break;
-    case "reveal":
-      view = screenReveal();
-      break;
-    case "discussion":
-      view = screenDiscussion();
-      break;
-    case "vote":
-      view =
-        state.game.voteStage === "cover" ? screenVoteCover() : screenVote();
-      break;
-    case "guess":
-      view =
-        state.game.guessStage === "cover" ? screenGuessCover() : screenGuess();
-      break;
-    case "results":
-      view = screenResults();
-      break;
-    case "title":
-    default:
-      view = screenTitle();
-      break;
+  const update = () => {
+    root.innerHTML = "";
+    let view;
+    switch (state.screen) {
+      case "setup":
+        view = screenSetup();
+        break;
+      case "reveal":
+        view = screenReveal();
+        break;
+      case "discussion":
+        view = screenDiscussion();
+        break;
+      case "vote":
+        view =
+          state.game.voteStage === "cover" ? screenVoteCover() : screenVote();
+        break;
+      case "guess":
+        view =
+          state.game.guessStage === "cover" ? screenGuessCover() : screenGuess();
+        break;
+      case "results":
+        view = screenResults();
+        break;
+      case "title":
+      default:
+        view = screenTitle();
+        break;
+    }
+    root.appendChild(view);
+    if (state.screen === "setup") refreshSetupControls();
+    if (state.screen === "discussion") updateTimerDisplay();
+    window.scrollTo(0, 0);
+  };
+  if (document.startViewTransition) {
+    document.startViewTransition(update);
+  } else {
+    update();
   }
-  root.appendChild(view);
-  if (state.screen === "setup") refreshSetupControls();
-  if (state.screen === "discussion") updateTimerDisplay();
-  window.scrollTo(0, 0);
 }
 
 /* --------------------------------------------------------------------------
@@ -1454,19 +1510,23 @@ document.addEventListener("click", (event) => {
 
   switch (action) {
     case "toggle-theme":
+      haptic();
       toggleTheme();
       break;
     case "go-setup":
+      haptic();
       state.screen = "setup";
       render();
       break;
     case "go-title":
+      haptic();
       captureSetupForm();
       saveSetup();
       state.screen = "title";
       render();
       break;
     case "player-add":
+      haptic();
       captureSetupForm();
       if (playerCount() < GAME_DEFAULTS.maxPlayers) {
         state.setup.names.push("");
@@ -1475,6 +1535,7 @@ document.addEventListener("click", (event) => {
       }
       break;
     case "player-remove":
+      haptic();
       captureSetupForm();
       if (playerCount() > GAME_DEFAULTS.minPlayers) {
         const index = Number(trigger.dataset.index);
@@ -1484,6 +1545,7 @@ document.addEventListener("click", (event) => {
       }
       break;
     case "toggle-category": {
+      haptic();
       captureSetupForm();
       const id = trigger.dataset.id;
       const at = state.setup.categoryIds.indexOf(id);
@@ -1499,6 +1561,7 @@ document.addEventListener("click", (event) => {
     }
     case "out-set":
       if (!trigger.disabled) {
+        haptic();
         captureSetupForm();
         state.setup.numOut = Number(trigger.dataset.value) === 2 ? 2 : 1;
         saveSetup();
@@ -1506,9 +1569,11 @@ document.addEventListener("click", (event) => {
       }
       break;
     case "start-round":
+      haptic();
       startGame();
       break;
     case "reveal-ready":
+      haptic();
       if (state.game) {
         state.game.revealStage = "card";
         render();
@@ -1516,6 +1581,7 @@ document.addEventListener("click", (event) => {
       break;
     case "flip-card": {
       if (!state.game || state.game.cardFlipped) break;
+      haptic();
       const player = state.game.players[state.game.revealIndex];
       const isOut = state.game.outIds.includes(player.id);
       state.game.cardFlipped = true;
@@ -1527,29 +1593,24 @@ document.addEventListener("click", (event) => {
       break;
     }
     case "reveal-done":
+      haptic();
       advanceReveal();
       break;
-    case "timer-toggle":
-      if (state.game) {
-        if (state.game.timerRunning) stopTimer();
-        else startTimer();
-      }
-      break;
-    case "timer-reset":
-      if (state.game) {
-        stopTimer();
-        state.game.timerRemaining = state.setup.discussionSeconds;
-        updateTimerDisplay();
-      }
+    case "turn-next":
+      haptic();
+      advanceTurn();
       break;
     case "go-vote":
+      haptic();
       startVoting();
       break;
     case "vote-ready":
+      haptic();
       state.game.voteStage = "vote";
       render();
       break;
     case "vote-select": {
+      haptic();
       state.game.voteSelection = trigger.dataset.target;
       document
         .querySelectorAll('[data-action="vote-select"]')
@@ -1565,16 +1626,19 @@ document.addEventListener("click", (event) => {
     }
     case "vote-confirm":
       if (state.game.voteSelection) {
+        haptic();
         state.game.votes[state.game.players[state.game.voteIndex].id] =
           state.game.voteSelection;
         advanceVote();
       }
       break;
     case "guess-ready":
+      haptic();
       state.game.guessStage = "guess";
       render();
       break;
     case "guess-submit": {
+      haptic();
       const input = document.getElementById("guess-input");
       state.game.guesses[state.game.players[state.game.guessIndex].id] =
         input ? input.value : "";
@@ -1582,13 +1646,22 @@ document.addEventListener("click", (event) => {
       break;
     }
     case "guess-skip":
+      haptic();
       advanceGuess();
       break;
     case "next-round":
+      haptic();
       nextRound();
       break;
     case "new-game":
+      haptic();
       newGame();
+      break;
+    case "share-results":
+      shareResults();
+      break;
+    case "copy-scoreboard":
+      copyScoreboard();
       break;
     default:
       break;
@@ -1602,14 +1675,95 @@ document.addEventListener("input", (event) => {
     if (!Number.isNaN(index)) state.setup.names[index] = event.target.value;
     saveSetup();
     refreshSetupControls();
-  } else if (field === "discussion-minutes") {
+  } else if (field === "per-question-seconds") {
     const value = Number(event.target.value);
-    state.setup.discussionSeconds = Number.isFinite(value)
-      ? Math.max(0, Math.min(15, value)) * 60
-      : GAME_DEFAULTS.discussionSeconds;
+    state.setup.perQuestionSeconds = Number.isFinite(value)
+      ? Math.max(0, Math.min(300, value))
+      : GAME_DEFAULTS.perQuestionSeconds;
     saveSetup();
   }
 });
+
+/* --------------------------------------------------------------------------
+   Share + Clipboard
+   -------------------------------------------------------------------------- */
+
+function shareResults() {
+  haptic();
+  const game = state.game;
+  if (!game) return;
+  const outNames = game.outIds.map(maskName).join("، ");
+  const text =
+    "برا السالفة — الجولة " +
+    game.round +
+    "\nبرا السالفة كانوا: " +
+    outNames +
+    "\nالسر: " +
+    (game.secret ? game.secret.item : "؟");
+  if (navigator.share) {
+    navigator.share({ title: "برا السالفة", text, url: location.href }).catch(function () {});
+  } else {
+    copyToClipboard(text);
+  }
+}
+
+function copyScoreboard() {
+  haptic();
+  const game = state.game;
+  if (!game) return;
+  var rows = game.players
+    .slice()
+    .sort(function (a, b) { return b.score - a.score; })
+    .map(function (p, i) { return (i + 1) + ". " + p.name + ": " + p.score; })
+    .join("\n");
+  var text = "برا السالفة — لوحة النقاط\n" + rows;
+  copyToClipboard(text);
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function () {
+      showToast("تم النسخ");
+    }).catch(function () {
+      showToast("ما اتنسخ");
+    });
+  } else {
+    showToast("ما اتنسخ");
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Offline detection
+   -------------------------------------------------------------------------- */
+
+function setupOfflineDetection() {
+  if (typeof navigator === "undefined" || !window.addEventListener) return;
+  var banner = document.getElementById("offline-banner");
+  if (!banner) return;
+  function update() {
+    if (navigator.onLine) {
+      banner.classList.remove("is-visible");
+    } else {
+      banner.classList.add("is-visible");
+    }
+  }
+  window.addEventListener("online", update);
+  window.addEventListener("offline", update);
+  update();
+}
+
+/* --------------------------------------------------------------------------
+   Splash screen
+   -------------------------------------------------------------------------- */
+
+function hideSplash() {
+  var splash = document.getElementById("splash");
+  if (!splash) return;
+  splash.classList.add("is-hidden");
+  setTimeout(function () {
+    if (splash.parentNode) splash.parentNode.removeChild(splash);
+  }, 500);
+}
 
 /* --------------------------------------------------------------------------
    Debug hooks (safe to inspect from the browser console)
@@ -1638,6 +1792,30 @@ function init() {
   loadSetup();
   runFairnessSelfCheck();
   render();
+  setupOfflineDetection();
+
+  /* Hide splash after a short delay */
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () {
+      setTimeout(hideSplash, 400);
+    });
+  } else {
+    setTimeout(hideSplash, 800);
+  }
+
+  /* SW update notification */
+  if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      location.reload();
+    });
+    navigator.serviceWorker.ready.then(function (reg) {
+      if (reg.active) {
+        reg.addEventListener("updatefound", function () {
+          showToast("تحديث متاح — يُطبّق عند الإغلاق");
+        });
+      }
+    }).catch(function () {});
+  }
 }
 
 init();

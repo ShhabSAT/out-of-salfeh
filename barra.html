@@ -1,0 +1,3463 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0F1923" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>برا السالفة</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Changa:wght@600;700;800&family=Tajawal:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    .boot-error {
+      max-width: 640px;
+      margin: 15vh auto;
+      padding: 24px;
+      border-radius: 16px;
+      background: #162230;
+      color: #f5e6c8;
+      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+      text-align: center;
+      line-height: 1.9;
+      font-size: 1.05rem;
+      border: 1px solid rgba(245, 230, 200, 0.15);
+    }
+    .boot-error small {
+      display: block;
+      margin-top: 8px;
+      color: #7a9b8a;
+      word-break: break-word;
+      font-size: 0.85rem;
+    }
+  </style>
+  <style>
+/* ==========================================================================
+   برا السالفة — native app feel
+   Browser suppression, touch handling, scrollbar, spinners.
+   ========================================================================== */
+
+html {
+  touch-action: manipulation;
+  overscroll-behavior: none;
+}
+
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input::-webkit-inner-spin-button,
+input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.app {
+  -webkit-overflow-scrolling: touch;
+}
+
+  </style>
+  <style>
+/* ==========================================================================
+   برا السالفة — design tokens
+   ========================================================================== */
+
+:root {
+  --plum-900: #0F1923;
+  --plum-800: #162230;
+  --plum-700: #1e2d3d;
+  --coral: #e8384f;
+  --coral-deep: #b12a3d;
+  --mint: #5dbe6a;
+  --mint-deep: #3d8a48;
+  --sand: #f5c842;
+  --sand-deep: #c49e2e;
+  --cloud: #f5e6c8;
+  --lilac: #7a9b8a;
+
+  --bg: var(--plum-900);
+  --surface: var(--plum-800);
+  --surface-2: var(--plum-700);
+  --text: var(--cloud);
+  --text-muted: var(--lilac);
+  --line: rgba(247, 243, 237, 0.1);
+
+  --font-display: "Changa", "Tajawal", system-ui, sans-serif;
+  --font-body: "Tajawal", system-ui, sans-serif;
+
+  --radius: 18px;
+  --radius-sm: 12px;
+  --tap: 48px;
+
+  --shadow-tactile: 0 4px 0 rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="light"] {
+  --bg: #f5e6c8;
+  --surface: #ffffff;
+  --surface-2: #ede0c8;
+  --text: #0F1923;
+  --text-muted: #4a7c59;
+  --line: rgba(15, 25, 35, 0.12);
+  --shadow-tactile: 0 4px 0 rgba(15, 25, 35, 0.18);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--text);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 70% at 80% -10%, rgba(232, 56, 79, 0.18), transparent 60%),
+    radial-gradient(100% 60% at 10% 110%, rgba(93, 190, 106, 0.14), transparent 60%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+[data-theme="light"] body {
+  background-image:
+    radial-gradient(120% 70% at 80% -10%, rgba(232, 56, 79, 0.12), transparent 60%),
+    radial-gradient(100% 60% at 10% 110%, rgba(93, 190, 106, 0.12), transparent 60%);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.15;
+}
+
+p {
+  margin: 0;
+}
+
+button,
+input,
+select {
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+}
+
+.screen {
+  width: 100%;
+  max-width: 720px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: screen-in 0.22s ease-out;
+}
+
+@keyframes screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.screen--wide {
+  max-width: 900px;
+}
+
+/* ==========================================================================
+   Top bar
+   ========================================================================== */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: var(--tap);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--bg) 75%, transparent);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 8px 0;
+  margin-bottom: 4px;
+}
+
+.topbar__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+}
+
+.topbar__side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  min-height: var(--tap);
+  padding: 12px 22px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  color: var(--text);
+  background: var(--surface-2);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease;
+  touch-action: manipulation;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--coral);
+  color: #2a0810;
+  box-shadow: 0 4px 0 var(--coral-deep);
+}
+
+.btn--primary:not(:disabled):active {
+  transform: translateY(3px) scale(0.97);
+  box-shadow: 0 1px 0 var(--coral-deep);
+}
+
+.btn--mint {
+  background: var(--mint);
+  color: #1a3d1e;
+  box-shadow: 0 4px 0 var(--mint-deep);
+}
+
+.btn--mint:not(:disabled):active {
+  transform: translateY(3px) scale(0.97);
+  box-shadow: 0 1px 0 var(--mint-deep);
+}
+
+.btn--sand {
+  background: var(--sand);
+  color: #3a2606;
+  box-shadow: 0 4px 0 var(--sand-deep);
+}
+
+.btn--sand:not(:disabled):active {
+  transform: translateY(3px) scale(0.97);
+  box-shadow: 0 1px 0 var(--sand-deep);
+}
+
+.btn--outline {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--text);
+}
+
+.btn--outline:not(:disabled):hover {
+  background: var(--surface);
+}
+
+.btn--danger {
+  background: transparent;
+  border-color: rgba(232, 56, 79, 0.5);
+  color: var(--coral);
+}
+
+.btn--danger:not(:disabled):hover {
+  background: rgba(232, 56, 79, 0.12);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn--lg {
+  min-height: 58px;
+  font-size: 1.25rem;
+  border-radius: var(--radius);
+}
+
+.btn--icon {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 12px;
+  font-size: 1.05rem;
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+.btn-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-row > .btn {
+  flex: 1 1 160px;
+}
+
+/* ==========================================================================
+   Title / hero
+   ========================================================================== */
+
+.hero {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.hero__mark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(3.4rem, 16vw, 6.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+  background: linear-gradient(
+    175deg,
+    var(--cloud) 0%,
+    var(--cloud) 55%,
+    var(--sand) 130%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.22));
+}
+
+[data-theme="light"] .hero__mark {
+  background: linear-gradient(
+    175deg,
+    var(--plum-900) 0%,
+    var(--plum-900) 55%,
+    var(--coral) 135%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.hero__mark span {
+  display: block;
+}
+
+.hero__rule {
+  width: 84px;
+  height: 8px;
+  border-radius: 6px;
+  background: var(--mint);
+  transform: skewX(-12deg);
+}
+
+.hero__tag {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  max-width: 34ch;
+  line-height: 1.7;
+}
+
+.hero__meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ==========================================================================
+   Panels / cards
+   ========================================================================== */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.panel__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.3rem;
+}
+
+.panel__hint {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* ==========================================================================
+   Form bits
+   ========================================================================== */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field__label {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.field__hint {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.input {
+  min-height: var(--tap);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  width: 100%;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+/* ==========================================================================
+   Player rows
+   ========================================================================== */
+
+.players {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.player-row__num {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.player-row .input {
+  flex: 1;
+}
+
+/* ==========================================================================
+   Category grid
+   ========================================================================== */
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.category-card {
+  position: relative;
+  text-align: right;
+  padding: 16px;
+  min-height: 68px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.category-card__count {
+  display: block;
+  margin-top: 4px;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.category-card[aria-pressed="true"] {
+  border-color: var(--mint);
+  background: color-mix(in srgb, var(--mint) 16%, var(--surface-2));
+}
+
+.category-card[aria-pressed="true"] .category-card__count {
+  color: var(--text);
+}
+
+/* ==========================================================================
+   Segmented control
+   ========================================================================== */
+
+.segmented {
+  display: inline-flex;
+  gap: 6px;
+  padding: 5px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+
+.segmented button {
+  min-height: 42px;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.segmented button[aria-pressed="true"] {
+  background: var(--coral);
+  color: #2a0810;
+}
+
+.segmented button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Cover / pass-the-device
+   ========================================================================== */
+
+.cover {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  min-height: 70vh;
+}
+
+.cover__icon {
+  width: 84px;
+  height: 84px;
+  border-radius: 24px;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: 2.2rem;
+}
+
+.cover__name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.8rem, 8vw, 2.6rem);
+  color: var(--coral);
+}
+
+.cover__text {
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  max-width: 30ch;
+  line-height: 1.7;
+}
+
+/* ==========================================================================
+   Reveal flip card
+   ========================================================================== */
+
+.reveal-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  min-height: 78vh;
+  justify-content: center;
+}
+
+.flip-card {
+  width: min(84vw, 340px);
+  aspect-ratio: 3 / 4.2;
+  perspective: 1400px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.flip-card__inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.62s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+.flip-card.is-flipped .flip-card__inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card__face {
+  position: absolute;
+  inset: 0;
+  border-radius: 26px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 26px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.flip-card__face--front {
+  background: var(--surface);
+  border: 2px solid var(--line);
+  color: var(--text);
+}
+
+.flip-card__face--front::after {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border-radius: 18px;
+  border: 1px dashed var(--line);
+  pointer-events: none;
+}
+
+.flip-card__face--back {
+  transform: rotateY(180deg);
+  border: 2px solid transparent;
+}
+
+.flip-card__face--back.is-in {
+  background: linear-gradient(160deg, rgba(93, 190, 106, 0.28), var(--plum-800));
+  border-color: var(--mint);
+  color: var(--text);
+}
+
+.flip-card__face--back.is-out {
+  background: linear-gradient(160deg, rgba(245, 200, 66, 0.3), var(--plum-800));
+  border-color: var(--sand);
+  color: var(--text);
+}
+
+[data-theme="light"] .flip-card__face--back.is-in {
+  background: linear-gradient(160deg, rgba(93, 190, 106, 0.35), #ffffff);
+}
+
+[data-theme="light"] .flip-card__face--back.is-out {
+  background: linear-gradient(160deg, rgba(245, 200, 66, 0.4), #ffffff);
+}
+
+.flip-card__kicker {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.flip-card__role {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 2.1rem;
+}
+
+.flip-card__face--front .flip-card__role {
+  color: var(--text-muted);
+}
+
+.flip-card__face--back.is-in .flip-card__role {
+  color: var(--mint);
+}
+
+.flip-card__face--back.is-out .flip-card__role {
+  color: var(--sand);
+}
+
+.flip-card__secret {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.8rem, 9vw, 2.6rem);
+  line-height: 1.2;
+}
+
+.flip-card__category {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.flip-card__emoji {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.reveal-progress {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   Discussion / turn order
+   ========================================================================== */
+
+.timer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.timer__display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(3rem, 16vw, 5rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+}
+
+.timer__display.is-low {
+  color: var(--sand);
+}
+
+.timer__display.is-done {
+  color: var(--coral);
+}
+
+.turn-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  counter-reset: turn;
+}
+
+.turn-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+
+.turn-item__num {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.turn-item__text {
+  font-size: 1.02rem;
+}
+
+.turn-item__text b {
+  color: var(--coral);
+}
+
+.turn-item__text i {
+  font-style: normal;
+  color: var(--mint);
+}
+
+/* One-question-at-a-time focus card */
+.turn-focus {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 20px;
+  border-radius: var(--radius);
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--coral) 16%, var(--surface)),
+    var(--surface)
+  );
+  border: 1px solid var(--line);
+}
+
+.turn-focus__kicker {
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.turn-focus__line {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.turn-focus__name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.6rem, 8vw, 2.4rem);
+  line-height: 1.1;
+}
+
+.turn-focus__name--ask {
+  color: var(--coral);
+}
+
+.turn-focus__name--answer {
+  color: var(--mint);
+}
+
+.turn-focus__verb {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.turn-focus__hint {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  max-width: 34ch;
+}
+
+.timer__display--question {
+  font-size: clamp(2.4rem, 12vw, 3.6rem);
+}
+
+/* ==========================================================================
+   Voting
+   ========================================================================== */
+
+.vote-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vote-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: var(--tap);
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  text-align: right;
+}
+
+.vote-option[aria-pressed="true"] {
+  border-color: var(--coral);
+  background: color-mix(in srgb, var(--coral) 18%, var(--surface-2));
+}
+
+.vote-option__check {
+  color: var(--coral);
+  opacity: 0;
+}
+
+.vote-option[aria-pressed="true"] .vote-option__check {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   Results
+   ========================================================================== */
+
+.result-banner {
+  text-align: center;
+  padding: 22px;
+  border-radius: var(--radius);
+  border: 2px solid var(--line);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.result-banner__label {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.result-banner__names {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.6rem, 8vw, 2.4rem);
+  color: var(--sand);
+}
+
+.result-secret {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.result-secret__value {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: var(--coral);
+}
+
+.verdict {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.scoreboard {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.scoreboard th,
+.scoreboard td {
+  padding: 12px 10px;
+  text-align: right;
+  border-bottom: 1px solid var(--line);
+}
+
+.scoreboard th {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.scoreboard tr:last-child td {
+  border-bottom: none;
+}
+
+.scoreboard td:last-child,
+.scoreboard th:last-child {
+  text-align: left;
+}
+
+.scoreboard__rank {
+  color: var(--text-muted);
+  font-weight: 700;
+  width: 34px;
+}
+
+.scoreboard__name {
+  font-weight: 700;
+}
+
+.scoreboard__total {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.25rem;
+}
+
+.points-pos {
+  color: var(--mint);
+  font-weight: 700;
+}
+
+.points-zero {
+  color: var(--text-muted);
+}
+
+.score-leader .scoreboard__name::after {
+  content: "★";
+  color: var(--sand);
+  margin-inline-start: 6px;
+  font-size: 0.85rem;
+}
+
+/* ==========================================================================
+   Misc
+   ========================================================================== */
+
+.toast {
+  position: fixed;
+  inset-inline: 0;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.toast__inner {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 12px 20px;
+  border-radius: 999px;
+  font-weight: 500;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  animation: toast-in 0.25s ease-out;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.note {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--sand) 18%, var(--surface));
+  border: 1px solid var(--sand);
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.centered {
+  text-align: center;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.stack--tight {
+  gap: 8px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ==========================================================================
+   Selection
+   ========================================================================== */
+
+::selection {
+  background: var(--coral);
+  color: var(--cloud);
+}
+
+/* ==========================================================================
+   Splash screen
+   ========================================================================== */
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: var(--bg);
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.splash.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.splash__icon {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--line);
+  animation: splash-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes splash-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.splash__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2rem, 10vw, 3.2rem);
+  background: linear-gradient(175deg, var(--cloud) 0%, var(--cloud) 55%, var(--sand) 130%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ==========================================================================
+   Offline banner
+   ========================================================================== */
+
+.offline-banner {
+  position: fixed;
+  top: 0;
+  inset-inline: 0;
+  z-index: 60;
+  background: var(--coral);
+  color: #fff;
+  text-align: center;
+  padding: 10px 16px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+  pointer-events: none;
+}
+
+.offline-banner.is-visible {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* ==========================================================================
+   Form validation
+   ========================================================================== */
+
+.input--error {
+  border-color: var(--coral) !important;
+  box-shadow: 0 0 0 2px rgba(232, 56, 79, 0.25);
+}
+
+.field__error {
+  color: var(--coral);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Button spinner
+   ========================================================================== */
+
+.btn--loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.btn--loading::after {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btn-spin 0.6s linear infinite;
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   View transitions
+   ========================================================================== */
+
+::view-transition-old(root) {
+  animation: none;
+}
+
+::view-transition-new(root) {
+  animation: view-fade-in 0.2s ease-out;
+}
+
+@keyframes view-fade-in {
+  from { opacity: 0.7; }
+  to { opacity: 1; }
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 480px) {
+  .app {
+    padding-inline: 14px;
+  }
+
+  .category-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .btn-row > .btn {
+    flex-basis: 100%;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  .scoreboard th,
+  .scoreboard td {
+    padding: 10px 6px;
+  }
+
+  .scoreboard__total {
+    font-size: 1.1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .app {
+    padding: 28px;
+  }
+}
+
+/* ==========================================================================
+   Reduced motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .flip-card__inner {
+    transition: none;
+  }
+}
+  </style>
+</head>
+<body>
+  <div id="app" class="app" role="main"></div>
+  <div id="splash" class="splash">
+    <div class="splash__title" style="font-family:var(--font-display);font-weight:800;font-size:clamp(2rem,10vw,3.2rem);">برا السالفة</div>
+  </div>
+  <div id="offline-banner" class="offline-banner">أنت غير متصل — اللعبة تعمل بشكل طبيعي</div>
+  <noscript>
+    <div class="boot-error">
+      لازم تفعّل JavaScript في المتصفح عشان تشتغل اللعبة.
+    </div>
+  </noscript>
+
+  <script>
+(function () {
+  function showError(message) {
+    var app = document.getElementById("app");
+    if (!app) return;
+    if (app.querySelector(".boot-error")) return;
+    app.innerHTML =
+      '<div class="boot-error">تعذّر تشغيل اللعبة.<small>' +
+      String(message) +
+      "</small></div>";
+  }
+  window.__barraShowBootError = showError;
+  window.addEventListener("error", function (event) {
+    showError(event.message || "خطأ غير معروف");
+  });
+})();
+  </script>
+
+  <script>
+/* ==========================================================================
+   برا السالفة — category data + tunable constants
+   No ES modules and no fetch(): this file is loaded with a plain
+   <script src="data.js"><\/script> so the app also works from file://.
+   ========================================================================== */
+
+const CATEGORIES = [
+  {
+    id: "anime",
+    label: "أنمي",
+    items: [
+      "ناروتو",
+      "ون بيس",
+      "هجوم العمالقة",
+      "ديث نوت",
+      "دراغون بول",
+      "بليتش",
+      "هنتر إكس هنتر",
+      "جوجوتسو كايسن",
+      "ديمون سلاير",
+      "ماي هيرو أكاديميا",
+      "طوكيو غول",
+      "فولميتال ألكيميست",
+      "سورد آرت أونلاين",
+      "سباير إكس فاميلي",
+      "بلاك كلوفر",
+    ],
+  },
+  {
+    id: "food",
+    label: "أكل",
+    items: [
+      "شاورما",
+      "برغر",
+      "كبسة",
+      "مندي",
+      "بيتزا",
+      "فلافل",
+      "كشري",
+      "مقلوبة",
+      "مسخن",
+      "حمص",
+      "تبولة",
+      "فول",
+      "برياني",
+      "سمبوسة",
+      "شكشوكة",
+    ],
+  },
+  {
+    id: "desserts",
+    label: "حلويات",
+    items: [
+      "كنافة",
+      "بقلاوة",
+      "لقيمات",
+      "بسبوسة",
+      "كيك شوكولاتة",
+      "آيس كريم",
+      "مهلبية",
+      "أم علي",
+      "تشيز كيك",
+      "دونات",
+      "كوكيز",
+      "وافل",
+      "كريب",
+      "مافن",
+      "رز بلبن",
+    ],
+  },
+  {
+    id: "drinks",
+    label: "مشروبات",
+    items: [
+      "قهوة عربية",
+      "شاي",
+      "كرك",
+      "لاتيه",
+      "كابتشينو",
+      "موكا",
+      "عصير برتقال",
+      "عصير مانجو",
+      "ليمون بالنعناع",
+      "سموذي فراولة",
+      "ميلك شيك",
+      "بيبسي",
+      "شاي أخضر",
+      "قهوة تركية",
+      "سحلب",
+    ],
+  },
+  {
+    id: "cartoons",
+    label: "كرتون قديم",
+    items: [
+      "توم وجيري",
+      "سبونج بوب",
+      "السنافر",
+      "عدنان ولينا",
+      "غرندايزر",
+      "كابتن ماجد",
+      "هايدي",
+      "جزيرة الكنز",
+      "بوباي",
+      "لوني تونز",
+      "مغامرات سندباد",
+      "ريمي",
+      "ماوكلي",
+      "باتمان",
+      "سبايدرمان",
+    ],
+  },
+  {
+    id: "series",
+    label: "مسلسلات",
+    items: [
+      "صراع العروش",
+      "برايكينغ باد",
+      "فريندز",
+      "ذا أوفيس",
+      "سترينجر ثينجز",
+      "لا كاسا دي بابيل",
+      "موني هايست",
+      "بيكي بلايندرز",
+      "لوست",
+      "هاوس",
+      "ديكستر",
+      "شيرنوبل",
+      "باب الحارة",
+      "طاش ما طاش",
+      "الحفرة",
+    ],
+  },
+  {
+    id: "kpop",
+    label: "كيبوب",
+    items: [
+      "BTS",
+      "BLACKPINK",
+      "EXO",
+      "TWICE",
+      "RED VELVET",
+      "STRAY KIDS",
+      "SEVENTEEN",
+      "ITZY",
+      "NCT",
+      "TXT",
+      "AESPA",
+      "GOT7",
+      "MONSTA X",
+      "ATEEZ",
+      "MAMAMOO",
+    ],
+  },
+  {
+    id: "games",
+    label: "ألعاب فيديو",
+    items: [
+      "ماين كرافت",
+      "فورتنايت",
+      "ببجي",
+      "جي تي إيه",
+      "كول أوف ديوتي",
+      "فيفا",
+      "غود أوف وور",
+      "ذا لاست أوف أس",
+      "زيلدا",
+      "ماريو",
+      "بوكيمون",
+      "أساسنز كريد",
+      "ريزدنت إيفل",
+      "فالورانت",
+      "روكيت ليج",
+    ],
+  },
+  {
+    id: "produce",
+    label: "فواكه وخضار",
+    items: [
+      "تفاح",
+      "موز",
+      "برتقال",
+      "عنب",
+      "بطيخ",
+      "مانجو",
+      "فراولة",
+      "أناناس",
+      "رمان",
+      "كيوي",
+      "جزر",
+      "خيار",
+      "طماطم",
+      "بصل",
+      "بطاطس",
+    ],
+  },
+  {
+    id: "spy",
+    label: "جاسوس (أماكن)",
+    items: [
+      "مستشفى",
+      "مدرسة",
+      "مطار",
+      "ملعب",
+      "سينما",
+      "مطعم",
+      "فندق",
+      "شاطئ",
+      "سوق",
+      "حديقة",
+      "مكتب",
+      "مصنع",
+      "قطار",
+      "ملاهي",
+      "مسجد",
+    ],
+  },
+];
+
+const GAME_DEFAULTS = {
+  minPlayers: 3,
+  maxPlayers: 10,
+  outPlayersDefault: 1,
+  outPlayersMaxThreshold: 6,
+  perQuestionSeconds: 60,
+  turnsPerPlayer: 1,
+  scoring: {
+    correctVote: 1,
+    outEscaped: 2,
+    outGuessedItemBonus: 1,
+  },
+};
+
+/* Fast id -> category lookup */
+const CATEGORY_BY_ID = CATEGORIES.reduce((map, category) => {
+  map[category.id] = category;
+  return map;
+}, {});
+  </script>
+
+  <script>
+/* ==========================================================================
+   برا السالفة — app bootstrap + rendering
+   Plain vanilla JS. No modules, no build step.
+   ========================================================================== */
+
+const APP_VERSION = "1.0.0";
+
+const STORAGE_KEYS = {
+  setup: "barra.setup.v1",
+  theme: "barra.theme.v1",
+};
+
+function defaultSetup() {
+  return {
+    names: ["", "", ""],
+    categoryIds: [],
+    numOut: GAME_DEFAULTS.outPlayersDefault,
+    perQuestionSeconds: GAME_DEFAULTS.perQuestionSeconds,
+  };
+}
+
+const state = {
+  screen: "title",
+  theme: "dark",
+  setup: defaultSetup(),
+};
+
+let root = null;
+
+/* --------------------------------------------------------------------------
+   Small utilities
+   -------------------------------------------------------------------------- */
+
+function escapeHtml(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function el(html) {
+  const template = document.createElement("template");
+  template.innerHTML = html.trim();
+  return template.content.firstElementChild;
+}
+
+function randomChoice(list) {
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function haptic(pattern) {
+  if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(pattern || 10);
+}
+
+function shuffle(list) {
+  const copy = list.slice();
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+/* --------------------------------------------------------------------------
+   Secret item sampling (tasks.md 4.1)
+   Two-step draw so a large category never dominates a small one: first a
+   category with equal weight, then an item inside it. Anti-repeat across the
+   session via a used-items set; when the whole pool is exhausted it resets
+   (reshuffles) instead of erroring.
+   -------------------------------------------------------------------------- */
+
+function hasAvailableItem(categories, usedItemsSet) {
+  return categories.some((category) =>
+    category.items.some((item) => !usedItemsSet.has(category.id + ":" + item))
+  );
+}
+
+function pickSecretItem(selectedCategoryIds, usedItemsSet) {
+  const categories = selectedCategoryIds
+    .map((id) => CATEGORY_BY_ID[id])
+    .filter(Boolean);
+
+  if (categories.length === 0) {
+    throw new Error("pickSecretItem: no valid categories selected");
+  }
+
+  let reshuffled = false;
+  if (!hasAvailableItem(categories, usedItemsSet)) {
+    usedItemsSet.clear();
+    reshuffled = true;
+  }
+
+  let categoryId;
+  let item;
+  let key;
+  do {
+    const category = randomChoice(categories);
+    categoryId = category.id;
+    item = randomChoice(category.items);
+    key = categoryId + ":" + item;
+  } while (usedItemsSet.has(key));
+
+  usedItemsSet.add(key);
+
+  return {
+    categoryId,
+    categoryLabel: CATEGORY_BY_ID[categoryId].label,
+    item,
+    reshuffled,
+  };
+}
+
+/* --------------------------------------------------------------------------
+   Theme
+   -------------------------------------------------------------------------- */
+
+function loadTheme() {
+  let saved = null;
+  try {
+    saved = localStorage.getItem(STORAGE_KEYS.theme);
+  } catch (err) {
+    saved = null;
+  }
+  if (saved === "light" || saved === "dark") {
+    state.theme = saved;
+  } else if (
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: light)").matches
+  ) {
+    state.theme = "light";
+  }
+  applyTheme();
+}
+
+function applyTheme() {
+  document.documentElement.setAttribute("data-theme", state.theme);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) {
+    meta.setAttribute("content", state.theme === "light" ? "#F5E6C8" : "#0F1923");
+  }
+}
+
+function toggleTheme() {
+  state.theme = state.theme === "light" ? "dark" : "light";
+  try {
+    localStorage.setItem(STORAGE_KEYS.theme, state.theme);
+  } catch (err) {
+    /* storage unavailable — theme simply won't persist */
+  }
+  applyTheme();
+  render();
+}
+
+/* --------------------------------------------------------------------------
+   Toast
+   -------------------------------------------------------------------------- */
+
+let toastTimer = null;
+
+function showToast(message) {
+  const existing = document.querySelector(".toast");
+  if (existing) existing.remove();
+  if (toastTimer) clearTimeout(toastTimer);
+
+  const node = el(
+    `<div class="toast" role="status"><div class="toast__inner">${escapeHtml(
+      message
+    )}</div></div>`
+  );
+  document.body.appendChild(node);
+  toastTimer = setTimeout(() => node.remove(), 2600);
+}
+
+/* --------------------------------------------------------------------------
+   Top bar + screens
+   -------------------------------------------------------------------------- */
+
+function themeButton() {
+  const label = state.theme === "light" ? "الوضع الليلي" : "الوضع النهاري";
+  const icon = state.theme === "light" ? "🌙" : "☀️";
+  return `<button class="btn btn--icon" data-action="toggle-theme" aria-label="${label}" title="${label}">${icon}</button>`;
+}
+
+function topbar({ title, right = "" } = {}) {
+  return `
+    <header class="topbar">
+      <div class="topbar__side">${themeButton()}</div>
+      <div class="topbar__title">${escapeHtml(title || "برا السالفة")}</div>
+      <div class="topbar__side">${right}</div>
+    </header>
+  `;
+}
+
+function screenTitle() {
+  return el(`
+    <section class="screen">
+      ${topbar({ title: "برا السالفة" })}
+      <div class="hero">
+        <h1 class="hero__mark">
+          <span>برا</span>
+          <span>السالفة</span>
+        </h1>
+        <div class="hero__rule"></div>
+        <p class="hero__tag">
+          لعبة جماعية على جهاز واحد: سوّالفة، أسئلة، وتصويت سري.
+          واحد فيكم برا السالفة… اكتشفوه قبل لا يفوت الوقت.
+        </p>
+        <div class="hero__meta">
+          <span class="chip">٣ – ١٠ لاعبين</span>
+          <span class="chip">جهاز واحد</span>
+          <span class="chip">بدون إنترنت</span>
+        </div>
+      </div>
+      <button class="btn btn--primary btn--lg btn--block" data-action="go-setup">
+        ابدأ اللعب
+      </button>
+    </section>
+  `);
+}
+
+/* --------------------------------------------------------------------------
+   Setup persistence
+   -------------------------------------------------------------------------- */
+
+function padTo(list, min) {
+  const copy = list.slice();
+  while (copy.length < min) copy.push("");
+  return copy;
+}
+
+function loadSetup() {
+  let raw = null;
+  try {
+    raw = localStorage.getItem(STORAGE_KEYS.setup);
+  } catch (err) {
+    raw = null;
+  }
+  if (!raw) return;
+
+  let saved = null;
+  try {
+    saved = JSON.parse(raw);
+  } catch (err) {
+    return;
+  }
+  if (!saved || typeof saved !== "object") return;
+
+  const names = Array.isArray(saved.names)
+    ? saved.names
+        .slice(0, GAME_DEFAULTS.maxPlayers)
+        .map((name) => (typeof name === "string" ? name : ""))
+    : null;
+
+  const validIds = Array.isArray(saved.categoryIds)
+    ? saved.categoryIds.filter((id) => CATEGORY_BY_ID[id])
+    : [];
+
+  const perQuestion = Number(saved.perQuestionSeconds);
+  const numOut = Number(saved.numOut);
+
+  state.setup = {
+    names:
+      names && names.length >= GAME_DEFAULTS.minPlayers
+        ? padTo(names, GAME_DEFAULTS.minPlayers)
+        : defaultSetup().names,
+    categoryIds: validIds,
+    numOut: numOut === 2 ? 2 : 1,
+    perQuestionSeconds:
+      Number.isFinite(perQuestion) && perQuestion >= 0
+        ? perQuestion
+        : GAME_DEFAULTS.perQuestionSeconds,
+  };
+}
+
+function saveSetup() {
+  try {
+    localStorage.setItem(STORAGE_KEYS.setup, JSON.stringify(state.setup));
+  } catch (err) {
+    /* storage unavailable — config simply won't persist */
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Setup helpers
+   -------------------------------------------------------------------------- */
+
+function filledNames() {
+  return state.setup.names.map((name) => name.trim()).filter(Boolean);
+}
+
+function playerCount() {
+  return state.setup.names.length;
+}
+
+function canChooseTwoOut() {
+  return filledNames().length >= GAME_DEFAULTS.outPlayersMaxThreshold;
+}
+
+function setupIsValid() {
+  const count = filledNames().length;
+  return (
+    count >= GAME_DEFAULTS.minPlayers &&
+    count <= GAME_DEFAULTS.maxPlayers &&
+    state.setup.categoryIds.length >= 1
+  );
+}
+
+function captureSetupForm() {
+  document.querySelectorAll('[data-field="player-name"]').forEach((input) => {
+    const index = Number(input.dataset.index);
+    if (!Number.isNaN(index)) state.setup.names[index] = input.value;
+  });
+  const seconds = document.querySelector('[data-field="per-question-seconds"]');
+  if (seconds) {
+    const value = Number(seconds.value);
+    state.setup.perQuestionSeconds = Number.isFinite(value)
+      ? Math.max(0, Math.min(300, value))
+      : GAME_DEFAULTS.perQuestionSeconds;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Setup screen
+   -------------------------------------------------------------------------- */
+
+function playerRow(name, index) {
+  const removable = playerCount() > GAME_DEFAULTS.minPlayers;
+  return `
+    <div class="player-row">
+      <span class="player-row__num" aria-hidden="true">${index + 1}</span>
+      <input
+        class="input"
+        type="text"
+        data-field="player-name"
+        data-index="${index}"
+        value="${escapeHtml(name)}"
+        placeholder="اسم اللاعب"
+        maxlength="20"
+        autocomplete="off"
+        aria-label="اسم اللاعب ${index + 1}"
+      />
+      <button
+        class="btn btn--danger btn--icon"
+        data-action="player-remove"
+        data-index="${index}"
+        aria-label="حذف اللاعب ${index + 1}"
+        ${removable ? "" : "disabled"}
+      >✕</button>
+    </div>
+  `;
+}
+
+function categoryCard(category) {
+  const selected = state.setup.categoryIds.includes(category.id);
+  return `
+    <button
+      type="button"
+      class="category-card"
+      data-action="toggle-category"
+      data-id="${category.id}"
+      aria-pressed="${selected}"
+    >
+      ${escapeHtml(category.label)}
+      <span class="category-card__count">${category.items.length} عنصر</span>
+    </button>
+  `;
+}
+
+function outSegmented() {
+  const two = canChooseTwoOut();
+  return `
+    <div class="segmented" role="group" aria-label="عدد اللاعبين خارج السالفة">
+      <button type="button" data-action="out-set" data-value="1" aria-pressed="${
+        state.setup.numOut === 1
+      }">واحد</button>
+      <button type="button" data-action="out-set" data-value="2" aria-pressed="${
+        state.setup.numOut === 2
+      }" ${two ? "" : "disabled"}>اثنين</button>
+    </div>
+  `;
+}
+
+function screenSetup() {
+  const view = el(`
+    <section class="screen screen--wide">
+      ${topbar({
+        title: "تجهيز اللعبة",
+        right: `<button class="btn btn--icon" data-action="go-title" aria-label="رجوع">↩</button>`,
+      })}
+      <div class="panel">
+        <div class="panel__head">
+          <h2 class="panel__title">اللاعبون</h2>
+          <p class="panel__hint">
+            من ٣ إلى ١٠ لاعبين، وكلهم يشاركون نفس الجهاز.
+            <span id="player-count"></span>
+          </p>
+        </div>
+        <div class="players" id="players-list">
+          ${state.setup.names.map(playerRow).join("")}
+        </div>
+        <button class="btn btn--outline btn--block" data-action="player-add">
+          + أضف لاعب
+        </button>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">
+          <h2 class="panel__title">الفئات</h2>
+          <p class="panel__hint">اختر فئة أو أكثر — تُدمج كلها في جولة واحدة.</p>
+        </div>
+        <div class="category-grid">
+          ${CATEGORIES.map(categoryCard).join("")}
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">
+          <h2 class="panel__title">إعدادات الجولة</h2>
+        </div>
+        <div class="field">
+          <span class="field__label">كم واحد برا السالفة؟</span>
+          ${outSegmented()}
+        </div>
+        <div class="field">
+          <label class="field__label" for="per-question-seconds">مدة كل سؤال (ثواني)</label>
+          <input
+            class="input"
+            id="per-question-seconds"
+            type="number"
+            data-field="per-question-seconds"
+            min="0"
+            max="300"
+            step="5"
+            value="${state.setup.perQuestionSeconds}"
+          />
+          <span class="field__hint">
+            كل لاعب ياخذ دوره بالسؤال، والمؤقت ينتقل تلقائياً للي بعده. اكتب ٠ لإلغاء المؤقت.
+          </span>
+        </div>
+      </div>
+
+      <button
+        id="start-round"
+        class="btn btn--primary btn--lg btn--block"
+        data-action="start-round"
+      >
+        يلا نبدأ
+      </button>
+    </section>
+  `);
+  return view;
+}
+
+function refreshSetupControls() {
+  const count = filledNames().length;
+  const countEl = document.getElementById("player-count");
+  if (countEl) countEl.textContent = `(${count} جاهزين)`;
+
+  const twoDisabled = !canChooseTwoOut();
+  const twoBtn = document.querySelector('[data-action="out-set"][data-value="2"]');
+  if (twoBtn) {
+    twoBtn.disabled = twoDisabled;
+    if (twoDisabled && state.setup.numOut === 2) {
+      state.setup.numOut = 1;
+      const oneBtn = document.querySelector('[data-action="out-set"][data-value="1"]');
+      if (oneBtn) oneBtn.setAttribute("aria-pressed", "true");
+      twoBtn.setAttribute("aria-pressed", "false");
+    }
+  }
+
+  const startBtn = document.getElementById("start-round");
+  if (startBtn) startBtn.disabled = !setupIsValid();
+}
+
+/* --------------------------------------------------------------------------
+   Game engine (tasks.md 4.2 + 4.3)
+   -------------------------------------------------------------------------- */
+
+function orderByCount(players, counts) {
+  /* shuffle first, then stable-sort by count => random tie-break */
+  return shuffle(players).sort(
+    (a, b) => (counts[a.id] || 0) - (counts[b.id] || 0)
+  );
+}
+
+function pickOutPlayers(players, numOut) {
+  const count = Math.max(1, Math.min(numOut, players.length - 1));
+  const sorted = shuffle(players).sort((a, b) => a.outCount - b.outCount);
+  const chosen = sorted.slice(0, count);
+  chosen.forEach((player) => {
+    player.outCount += 1;
+  });
+  return chosen;
+}
+
+function buildTurnOrder(players, totalTurns, counters) {
+  const count = players.length;
+  const order = [];
+  if (count < 2 || totalTurns <= 0) return order;
+
+  /* Fair, weighted round-robin.
+     The spec's raw greedy (pick min-ask, then min-answer excluding the
+     asker) can drift: a player who is simultaneously the unique min in
+     both counters is forced to ask at the exact moment they should
+     answer, which leaves max-min = 2. Instead we arrange the players in
+     a ring (least-used askers lead each pass, random tie-break) and have
+     turn i ask while the NEXT player in the ring answers. Over any pass
+     every player asks once and answers once, so both spreads stay <= 1
+     by construction — and no asker ever repeats back-to-back, and no
+     asker/answer pair immediately repeats. */
+  let ring = [];
+  let lastAsker = null;
+  let lastPair = null;
+
+  for (let i = 0; i < totalTurns; i++) {
+    const offset = i % count;
+    if (offset === 0) {
+      ring = orderByCount(players, counters.ask);
+      /* don't open a pass with the same person who just asked */
+      if (lastAsker && ring[0].id === lastAsker && count > 2) {
+        const swap = ring.findIndex((p) => p.id !== lastAsker);
+        [ring[0], ring[swap]] = [ring[swap], ring[0]];
+      }
+      /* don't immediately repeat the exact same asker/answer pair */
+      if (
+        lastPair &&
+        count > 3 &&
+        ring[0].id === lastPair.asker &&
+        ring[1].id === lastPair.answerer
+      ) {
+        [ring[1], ring[2]] = [ring[2], ring[1]];
+      }
+    }
+
+    const asker = ring[offset];
+    const answerer = ring[(offset + 1) % count];
+
+    counters.ask[asker.id] = (counters.ask[asker.id] || 0) + 1;
+    counters.answer[answerer.id] = (counters.answer[answerer.id] || 0) + 1;
+    lastAsker = asker.id;
+    lastPair = { asker: asker.id, answerer: answerer.id };
+    order.push({ asker: asker.id, answerer: answerer.id });
+  }
+
+  return order;
+}
+
+function debugSimulateFairness(playerCounts, rounds) {
+  const sizes = playerCounts || [4, 6, 8];
+  const runs = rounds || 100;
+  return sizes.map((size) => {
+    const players = Array.from({ length: size }, (_, i) => ({
+      id: "p" + i,
+      outCount: 0,
+    }));
+    const counters = { ask: {}, answer: {} };
+    let passed = true;
+    let worstAsk = 0;
+    let worstAnswer = 0;
+
+    for (let r = 0; r < runs; r++) {
+      buildTurnOrder(
+        players,
+        size * GAME_DEFAULTS.turnsPerPlayer,
+        counters
+      );
+      const askValues = players.map((p) => counters.ask[p.id] || 0);
+      const answerValues = players.map((p) => counters.answer[p.id] || 0);
+      const askSpread = Math.max(...askValues) - Math.min(...askValues);
+      const answerSpread =
+        Math.max(...answerValues) - Math.min(...answerValues);
+      worstAsk = Math.max(worstAsk, askSpread);
+      worstAnswer = Math.max(worstAnswer, answerSpread);
+      if (askSpread > 1 || answerSpread > 1) passed = false;
+    }
+
+    return { players: size, rounds: runs, passed, worstAsk, worstAnswer };
+  });
+}
+
+function runFairnessSelfCheck() {
+  const results = debugSimulateFairness([4, 6, 8], 100);
+  const allPassed = results.every((r) => r.passed);
+  if (allPassed) {
+    console.info(
+      "[برا السالفة] فحص العدالة نجح:",
+      results
+        .map(
+          (r) =>
+            `${r.players} لاعبين (فرق الأسنان ${r.worstAsk}/${r.worstAnswer})`
+        )
+        .join("، ")
+    );
+  } else {
+    console.error("[برا السالفة] فحص العدالة فشل:", results);
+  }
+  return allPassed;
+}
+
+/* --------------------------------------------------------------------------
+   Round lifecycle
+   -------------------------------------------------------------------------- */
+
+function startGame() {
+  captureSetupForm();
+  saveSetup();
+
+  /* Inline validation */
+  var hasErrors = false;
+  document.querySelectorAll('[data-field="player-name"]').forEach(function (input) {
+    var idx = Number(input.dataset.index);
+    var val = (state.setup.names[idx] || "").trim();
+    if (!val) {
+      input.classList.add("input--error");
+      hasErrors = true;
+    } else {
+      input.classList.remove("input--error");
+    }
+  });
+  if (state.setup.categoryIds.length === 0) {
+    var grid = document.querySelector(".category-grid");
+    if (grid) {
+      grid.style.outline = "2px solid var(--coral)";
+      grid.style.borderRadius = "var(--radius-sm)";
+      setTimeout(function () { grid.style.outline = ""; }, 1500);
+    }
+    hasErrors = true;
+  }
+  if (hasErrors) {
+    showToast("كمّل الأسماء واختر فئة أولاً");
+    return;
+  }
+
+  if (!setupIsValid()) {
+    showToast("كمّل الأسماء واختر فئة أولاً");
+    return;
+  }
+
+  var startBtn = document.getElementById("start-round");
+  if (startBtn) startBtn.classList.add("btn--loading");
+
+  const names = filledNames();
+  state.game = {
+    players: names.map((name, index) => ({
+      id: "p" + index,
+      name,
+      score: 0,
+      outCount: 0,
+    })),
+    round: 1,
+    secret: null,
+    outIds: [],
+    turnOrder: [],
+    askCount: {},
+    answerCount: {},
+    usedItems: new Set(),
+    reshuffled: false,
+    votes: {},
+  };
+
+  startRound();
+}
+
+function startRound() {
+  const game = state.game;
+  if (!game) return;
+
+  game.players.forEach((player) => {
+    if (game.askCount[player.id] == null) game.askCount[player.id] = 0;
+    if (game.answerCount[player.id] == null) game.answerCount[player.id] = 0;
+  });
+
+  const secret = pickSecretItem(state.setup.categoryIds, game.usedItems);
+  game.secret = secret;
+  game.reshuffled = secret.reshuffled;
+
+  game.outIds = pickOutPlayers(game.players, state.setup.numOut).map(
+    (player) => player.id
+  );
+
+  game.turnOrder = buildTurnOrder(
+    game.players,
+    game.players.length * GAME_DEFAULTS.turnsPerPlayer,
+    { ask: game.askCount, answer: game.answerCount }
+  );
+
+  game.votes = {};
+  game.revealIndex = 0;
+  game.revealStage = "cover";
+  game.cardFlipped = false;
+  game.voteIndex = 0;
+  game.voteStage = "cover";
+  game.turnIndex = 0;
+  resetTurnTimer();
+
+  state.screen = "reveal";
+  render();
+}
+
+/* --------------------------------------------------------------------------
+   Reveal phase (tasks.md 4.5 + signature flip card)
+   -------------------------------------------------------------------------- */
+
+function playerById(id) {
+  const game = state.game;
+  if (!game) return null;
+  return game.players.find((player) => player.id === id) || null;
+}
+
+function maskName(id) {
+  const player = playerById(id);
+  return player ? player.name : "؟";
+}
+
+function screenRevealCover() {
+  const game = state.game;
+  const player = game.players[game.revealIndex];
+  const ready = game.revealIndex === 0;
+  return el(`
+    <section class="screen">
+      ${topbar({
+        title: "كشف الدور",
+        right: `<span class="chip">${game.revealIndex + 1} / ${game.players.length}</span>`,
+      })}
+      <div class="cover">
+        <div class="cover__icon" aria-hidden="true">📱</div>
+        <p class="cover__text">مرّر الجهاز إلى</p>
+        <h2 class="cover__name">${escapeHtml(player.name)}</h2>
+        <p class="cover__text">لا تضغط أي شيء إلا لما يوصل الجهاز بيدك.</p>
+        <button class="btn btn--primary btn--lg" data-action="reveal-ready">
+          جاهز
+        </button>
+      </div>
+      <p class="centered field__hint">
+        ${ready ? "ابدأ بأول لاعب." : "الأدوار سرية — لا أحد يشوف غير دوره."}
+      </p>
+    </section>
+  `);
+}
+
+function cardBackHtml(isOut) {
+  const game = state.game;
+  if (isOut) {
+    return `
+      <div class="flip-card__emoji" aria-hidden="true">🎭</div>
+      <div class="flip-card__role">برا السالفة</div>
+      <p class="flip-card__category">
+        خمّن السر من كلامهم، ولا تخليهم يعرفون إنك برا السالفة.
+      </p>
+    `;
+  }
+  return `
+    <div class="flip-card__kicker">السر هو</div>
+    <div class="flip-card__secret">${escapeHtml(game.secret.item)}</div>
+    <div class="flip-card__category">${escapeHtml(game.secret.categoryLabel)}</div>
+    <p class="flip-card__category">
+      اوصفه بدون ما تقول اسمه، ولا تخلي اللي برا السالفة يعرفه.
+    </p>
+  `;
+}
+
+function screenRevealCard() {
+  const game = state.game;
+  const player = game.players[game.revealIndex];
+  const isOut = game.outIds.includes(player.id);
+  const flipped = !!game.cardFlipped;
+  const backClass = isOut ? "is-out" : "is-in";
+
+  /* The back face is only filled in once the player flips the card, so the
+     secret never sits in the DOM (or a screen reader) before that tap. */
+  const backContent = flipped ? cardBackHtml(isOut) : "";
+
+  return el(`
+    <section class="screen">
+      ${topbar({
+        title: `دور ${player.name}`,
+        right: `<span class="chip">${game.revealIndex + 1} / ${game.players.length}</span>`,
+      })}
+      <div class="reveal-stage">
+        <p class="reveal-progress">لا تبيّن الشاشة لأحد.</p>
+        <button
+          type="button"
+          class="flip-card ${flipped ? "is-flipped" : ""}"
+          data-action="flip-card"
+          aria-label="اكشف دورك"
+        >
+          <div class="flip-card__inner">
+            <div class="flip-card__face flip-card__face--front">
+              <div class="flip-card__emoji" aria-hidden="true">🂠</div>
+              <div class="flip-card__role">اضغط لكشف دورك</div>
+              <div class="flip-card__kicker">سرّي — لا تبيّن لأحد</div>
+            </div>
+            <div class="flip-card__face flip-card__face--back ${backClass}">
+              ${backContent}
+            </div>
+          </div>
+        </button>
+        <button
+          id="reveal-done"
+          class="btn btn--mint btn--lg"
+          data-action="reveal-done"
+          ${flipped ? "" : "hidden"}
+        >
+          تم، أخفِها
+        </button>
+      </div>
+    </section>
+  `);
+}
+
+function screenReveal() {
+  const game = state.game;
+  if (!game) {
+    state.screen = "title";
+    return screenTitle();
+  }
+  return game.revealStage === "card"
+    ? screenRevealCard()
+    : screenRevealCover();
+}
+
+function advanceReveal() {
+  const game = state.game;
+  game.revealIndex += 1;
+  game.revealStage = "cover";
+  game.cardFlipped = false;
+
+  if (game.revealIndex >= game.players.length) {
+    state.screen = "discussion";
+    resetTurnTimer();
+    render();
+    startTurnTimer();
+    return;
+  }
+  render();
+}
+
+/* --------------------------------------------------------------------------
+   Discussion phase + countdown timer
+   -------------------------------------------------------------------------- */
+
+let timerHandle = null;
+
+function formatTime(seconds) {
+  const total = Math.max(0, Math.floor(seconds));
+  const minutes = String(Math.floor(total / 60)).padStart(2, "0");
+  const secs = String(total % 60).padStart(2, "0");
+  return minutes + ":" + secs;
+}
+
+function resetTurnTimer() {
+  const game = state.game;
+  if (!game) return;
+  if (timerHandle) {
+    clearInterval(timerHandle);
+    timerHandle = null;
+  }
+  game.turnTimerRemaining = state.setup.perQuestionSeconds;
+  game.turnTimerRunning = false;
+}
+
+function startTurnTimer() {
+  const game = state.game;
+  if (!game) return;
+  if (state.setup.perQuestionSeconds <= 0) return;
+  if (game.turnTimerRunning || game.turnTimerRemaining <= 0) return;
+  game.turnTimerRunning = true;
+  timerHandle = setInterval(tickTurnTimer, 1000);
+  updateTimerDisplay();
+}
+
+function stopTurnTimer() {
+  const game = state.game;
+  if (game) game.turnTimerRunning = false;
+  if (timerHandle) {
+    clearInterval(timerHandle);
+    timerHandle = null;
+  }
+  updateTimerDisplay();
+}
+
+function tickTurnTimer() {
+  const game = state.game;
+  if (!game || state.screen !== "discussion") {
+    stopTurnTimer();
+    return;
+  }
+  game.turnTimerRemaining = Math.max(0, game.turnTimerRemaining - 1);
+  updateTimerDisplay();
+  if (game.turnTimerRemaining === 0) {
+    stopTurnTimer();
+    advanceTurn();
+  }
+}
+
+function updateTimerDisplay() {
+  const game = state.game;
+  const display = document.getElementById("timer-display");
+  if (!game || !display) return;
+  display.textContent = formatTime(game.turnTimerRemaining || 0);
+  display.classList.toggle(
+    "is-low",
+    game.turnTimerRemaining <= 10 && game.turnTimerRemaining > 0
+  );
+  display.classList.toggle("is-done", game.turnTimerRemaining <= 0);
+}
+
+function currentTurn() {
+  const game = state.game;
+  if (!game || !game.turnOrder) return null;
+  return game.turnOrder[game.turnIndex] || null;
+}
+
+function advanceTurn() {
+  const game = state.game;
+  if (!game) return;
+  stopTurnTimer();
+  game.turnIndex += 1;
+  if (game.turnIndex >= game.turnOrder.length) {
+    startVoting();
+    return;
+  }
+  resetTurnTimer();
+  render();
+  startTurnTimer();
+}
+
+function screenDiscussion() {
+  const game = state.game;
+  const turn = currentTurn();
+  if (!turn) {
+    startVoting();
+    return screenTitle();
+  }
+
+  const asker = playerById(turn.asker);
+  const answerer = playerById(turn.answerer);
+  const total = game.turnOrder.length;
+  const hasTimer = state.setup.perQuestionSeconds > 0;
+
+  return el(`
+    <section class="screen">
+      ${topbar({
+        title: "وقت السوالف",
+        right: `<span class="chip">السؤال ${game.turnIndex + 1} / ${total}</span>`,
+      })}
+      ${
+        game.reshuffled
+          ? `<div class="note">خلصت كل عناصر الفئات المختارة، فتم خلط الأسرار من جديد.</div>`
+          : ""
+      }
+      <div class="turn-focus">
+        <p class="turn-focus__kicker">دور السؤال</p>
+        <div class="turn-focus__line">
+          <span class="turn-focus__name turn-focus__name--ask">${escapeHtml(
+            asker ? asker.name : "؟"
+          )}</span>
+          <span class="turn-focus__verb">يسأل</span>
+          <span class="turn-focus__name turn-focus__name--answer">${escapeHtml(
+            answerer ? answerer.name : "؟"
+          )}</span>
+        </div>
+        <p class="turn-focus__hint">
+          اسأله سؤالاً واحداً، وخلّ الباقين يسمعون ويحاولون يعرفون السر.
+        </p>
+      </div>
+      ${
+        hasTimer
+          ? `
+        <div class="panel timer">
+          <div
+            id="timer-display"
+            class="timer__display timer__display--question"
+            role="timer"
+            aria-live="off"
+          >${formatTime(game.turnTimerRemaining || state.setup.perQuestionSeconds)}</div>
+          <p class="field__hint centered">ينتقل تلقائياً للي بعده لما يخلص الوقت.</p>
+        </div>
+      `
+          : `<div class="note">بدون مؤقت — خلّص سؤالك واضغط "تم، التالي".</div>`
+      }
+      <button class="btn btn--primary btn--lg btn--block" data-action="turn-next">
+        تم، التالي
+      </button>
+      <button class="btn btn--outline btn--block" data-action="go-vote">
+        تخطّى للتصويت
+      </button>
+    </section>
+  `);
+}
+
+/* --------------------------------------------------------------------------
+   Voting phase (tasks.md 4.5)
+   -------------------------------------------------------------------------- */
+
+function passCover({ title, player, action, progress, note }) {
+  return el(`
+    <section class="screen">
+      ${topbar({
+        title,
+        right: progress
+          ? `<span class="chip">${progress}</span>`
+          : "",
+      })}
+      <div class="cover">
+        <div class="cover__icon" aria-hidden="true">📱</div>
+        <p class="cover__text">مرّر الجهاز إلى</p>
+        <h2 class="cover__name">${escapeHtml(player.name)}</h2>
+        <p class="cover__text">${escapeHtml(note)}</p>
+        <button class="btn btn--primary btn--lg" data-action="${action}">
+          جاهز
+        </button>
+      </div>
+    </section>
+  `);
+}
+
+function startVoting() {
+  stopTurnTimer();
+  const game = state.game;
+  game.votes = {};
+  game.voteIndex = 0;
+  game.voteStage = "cover";
+  game.voteSelection = null;
+  state.screen = "vote";
+  render();
+}
+
+function screenVoteCover() {
+  const game = state.game;
+  const voter = game.players[game.voteIndex];
+  return passCover({
+    title: "التصويت السري",
+    player: voter,
+    action: "vote-ready",
+    progress: `${game.voteIndex + 1} / ${game.players.length}`,
+    note: "لا تضغط إلا لما يوصل الجهاز بيدك — صوتك محد يشوفه.",
+  });
+}
+
+function screenVote() {
+  const game = state.game;
+  const voter = game.players[game.voteIndex];
+  const options = game.players
+    .filter((player) => player.id !== voter.id)
+    .map((player) => {
+      const selected = game.voteSelection === player.id;
+      return `
+        <button
+          type="button"
+          class="vote-option"
+          data-action="vote-select"
+          data-target="${player.id}"
+          aria-pressed="${selected}"
+        >
+          <span>${escapeHtml(player.name)}</span>
+          <span class="vote-option__check" aria-hidden="true">✓</span>
+        </button>
+      `;
+    })
+    .join("");
+
+  return el(`
+    <section class="screen">
+      ${topbar({
+        title: `تصويت ${voter.name}`,
+        right: `<span class="chip">${game.voteIndex + 1} / ${game.players.length}</span>`,
+      })}
+      <div class="panel">
+        <div class="panel__head">
+          <h2 class="panel__title">مين برا السالفة؟</h2>
+          <p class="panel__hint">اختر لاعباً واحداً — صوتك سرّي.</p>
+        </div>
+        <div class="vote-list">${options}</div>
+      </div>
+      <button
+        id="vote-confirm"
+        class="btn btn--primary btn--lg btn--block"
+        data-action="vote-confirm"
+        ${game.voteSelection ? "" : "disabled"}
+      >
+        ثبّت صوتي
+      </button>
+    </section>
+  `);
+}
+
+function advanceVote() {
+  const game = state.game;
+  game.voteIndex += 1;
+  game.voteStage = "cover";
+  game.voteSelection = null;
+  if (game.voteIndex >= game.players.length) {
+    startGuessing();
+    return;
+  }
+  render();
+}
+
+/* --------------------------------------------------------------------------
+   Guess-the-secret phase (fair: happens before the public reveal)
+   -------------------------------------------------------------------------- */
+
+function startGuessing() {
+  const game = state.game;
+  game.guesses = {};
+  game.guessIndex = 0;
+  game.guessStage = "cover";
+  state.screen = "guess";
+  render();
+}
+
+function screenGuessCover() {
+  const game = state.game;
+  const player = game.players[game.guessIndex];
+  return passCover({
+    title: "تخمين السر",
+    player,
+    action: "guess-ready",
+    progress: `${game.guessIndex + 1} / ${game.players.length}`,
+    note: "فرصة أخيرة قبل كشف السر.",
+  });
+}
+
+function screenGuess() {
+  const game = state.game;
+  const player = game.players[game.guessIndex];
+  const isOut = game.outIds.includes(player.id);
+
+  if (!isOut) {
+    return el(`
+      <section class="screen">
+        ${topbar({
+          title: `دور ${player.name}`,
+          right: `<span class="chip">${game.guessIndex + 1} / ${game.players.length}</span>`,
+        })}
+        <div class="cover">
+          <div class="cover__icon" aria-hidden="true">✅</div>
+          <h2 class="cover__name">ما عليك تخمين</h2>
+          <p class="cover__text">
+            أنت داخل السالفة وتعرف السر — مرّر الجهاز لللي بعدك.
+          </p>
+          <button class="btn btn--mint btn--lg" data-action="guess-skip">
+            تم
+          </button>
+        </div>
+      </section>
+    `);
+  }
+
+  return el(`
+    <section class="screen">
+      ${topbar({
+        title: `تخمين ${player.name}`,
+        right: `<span class="chip">${game.guessIndex + 1} / ${game.players.length}</span>`,
+      })}
+      <div class="panel">
+        <div class="panel__head">
+          <h2 class="panel__title">أنت برا السالفة… وش السر؟</h2>
+          <p class="panel__hint">
+            خمّن العنصر اللي كان مع الباقين. تخمين صحيح = نقطة إضافية.
+          </p>
+        </div>
+        <div class="field">
+          <label class="field__label" for="guess-input">تخمينك</label>
+          <input
+            class="input"
+            id="guess-input"
+            type="text"
+            maxlength="40"
+            autocomplete="off"
+            placeholder="اكتب تخمينك هنا"
+          />
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn--primary" data-action="guess-submit">
+          أرسل التخمين
+        </button>
+        <button class="btn btn--outline" data-action="guess-skip">
+          تخطّى
+        </button>
+      </div>
+    </section>
+  `);
+}
+
+function advanceGuess() {
+  const game = state.game;
+  game.guessIndex += 1;
+  game.guessStage = "cover";
+  if (game.guessIndex >= game.players.length) {
+    computeResults();
+    state.screen = "results";
+    render();
+    return;
+  }
+  render();
+}
+
+/* --------------------------------------------------------------------------
+   Scoring & results (tasks.md 4.4)
+   -------------------------------------------------------------------------- */
+
+function normalizeArabic(value) {
+  return String(value == null ? "" : value)
+    .trim()
+    .toLowerCase()
+    .replace(/[\u064B-\u0652\u0640]/g, "")
+    .replace(/[أإآٱ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/[ىي]/g, "ي")
+    .replace(/ؤ/g, "و")
+    .replace(/ئ/g, "ي")
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .replace(/\s+/g, " ");
+}
+
+function sameSet(a, b) {
+  if (a.length !== b.length) return false;
+  const set = new Set(b);
+  return a.every((id) => set.has(id));
+}
+
+function computeResults() {
+  const game = state.game;
+  const scoring = GAME_DEFAULTS.scoring;
+  const outSet = new Set(game.outIds);
+
+  const counts = {};
+  game.players.forEach((player) => {
+    counts[player.id] = 0;
+  });
+  Object.values(game.votes).forEach((target) => {
+    if (counts[target] != null) counts[target] += 1;
+  });
+
+  const topCount = Math.max(0, ...Object.values(counts));
+  const topIds = game.players
+    .filter((player) => counts[player.id] === topCount && topCount > 0)
+    .map((player) => player.id);
+
+  const decisive =
+    topCount > 0 && topIds.length === state.setup.numOut;
+  const matched = decisive && sameSet(topIds, game.outIds);
+
+  const caught = new Set();
+  if (matched) {
+    game.outIds.forEach((id) => caught.add(id));
+  } else if (decisive) {
+    topIds.forEach((id) => {
+      if (outSet.has(id)) caught.add(id);
+    });
+  }
+
+  const delta = {};
+  const reasons = {};
+  game.players.forEach((player) => {
+    delta[player.id] = 0;
+    reasons[player.id] = [];
+  });
+  const add = (id, points, label) => {
+    delta[id] += points;
+    reasons[id].push(label);
+  };
+
+  const correctVoters = [];
+  if (matched) {
+    game.players.forEach((voter) => {
+      if (outSet.has(game.votes[voter.id])) {
+        correctVoters.push(voter.id);
+        add(voter.id, scoring.correctVote, "صوّت صح");
+      }
+    });
+  }
+
+  const escaped = [];
+  game.outIds.forEach((id) => {
+    if (!caught.has(id)) {
+      escaped.push(id);
+      add(id, scoring.outEscaped, "نجا من التصويت");
+    }
+  });
+
+  const guessers = [];
+  game.outIds.forEach((id) => {
+    const guess = game.guesses[id];
+    if (guess && normalizeArabic(guess) === normalizeArabic(game.secret.item)) {
+      guessers.push(id);
+      add(id, scoring.outGuessedItemBonus, "عرف السر");
+    }
+  });
+
+  game.players.forEach((player) => {
+    player.score += delta[player.id];
+  });
+
+  let verdict;
+  if (matched) {
+    verdict = "كشفوهم! تصويتكم طابخ على اللي برا السالفة.";
+  } else if (!decisive) {
+    verdict = "تعادل بالأصوات — ما طلع أحد هالجولة، واللي برا السالفة نجوا.";
+  } else {
+    verdict = "التصويت طلع برا السكة — اللي برا السالفة نجوا بجلدهم.";
+  }
+
+  game.result = {
+    counts,
+    topCount,
+    topIds,
+    decisive,
+    matched,
+    caught: [...caught],
+    escaped,
+    correctVoters,
+    guessers,
+    delta,
+    reasons,
+    verdict,
+  };
+}
+
+function scoreboardRows(game, withRoundDelta) {
+  const sorted = game.players
+    .slice()
+    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, "ar"));
+  const leaderScore = sorted.length ? sorted[0].score : 0;
+  return sorted
+    .map((player, index) => {
+      const delta = withRoundDelta ? game.result.delta[player.id] : 0;
+      const deltaText =
+        delta > 0
+          ? `<span class="points-pos">+${delta}</span>`
+          : `<span class="points-zero">٠</span>`;
+      const leader =
+        player.score === leaderScore && leaderScore > 0 ? "score-leader" : "";
+      return `
+        <tr class="${leader}">
+          <td class="scoreboard__rank">${index + 1}</td>
+          <td class="scoreboard__name">${escapeHtml(player.name)}</td>
+          ${
+            withRoundDelta
+              ? `<td>${deltaText}</td>`
+              : ""
+          }
+          <td class="scoreboard__total">${player.score}</td>
+        </tr>
+      `;
+    })
+    .join("");
+}
+
+function screenResults() {
+  const game = state.game;
+  const result = game.result;
+  const outNames = game.outIds
+    .map((id) => escapeHtml(maskName(id)))
+    .join("، ");
+
+  const summary = game.players
+    .filter((player) => result.reasons[player.id].length > 0)
+    .map((player) => {
+      const list = result.reasons[player.id].join("، ");
+      const total = result.delta[player.id];
+      return `
+        <li class="turn-item">
+          <span class="turn-item__num" aria-hidden="true">+${total}</span>
+          <span class="turn-item__text">
+            <b>${escapeHtml(player.name)}</b>
+            <span class="field__hint">${escapeHtml(list)}</span>
+          </span>
+        </li>
+      `;
+    })
+    .join("");
+
+  return el(`
+    <section class="screen screen--wide">
+      ${topbar({
+        title: "النتيجة",
+        right: `<span class="chip">الجولة ${game.round}</span>
+                <button class="btn btn--icon" data-action="share-results" aria-label="مشاركة" title="مشاركة">↗</button>
+                <button class="btn btn--icon" data-action="copy-scoreboard" aria-label="نسخ" title="نسخ لوحة النقاط">📋</button>`,
+      })}
+      <div class="result-banner">
+        <span class="result-banner__label">برا السالفة كانوا</span>
+        <span class="result-banner__names">${outNames}</span>
+        <span class="result-secret">
+          <span class="result-banner__label">السر:</span>
+          <span class="result-secret__value">${escapeHtml(game.secret.item)}</span>
+          <span class="field__hint">(${escapeHtml(game.secret.categoryLabel)})</span>
+        </span>
+      </div>
+      <div class="verdict">${escapeHtml(result.verdict)}</div>
+      ${
+        summary
+          ? `
+        <div class="panel">
+          <div class="panel__head">
+            <h2 class="panel__title">نقاط هالجولة</h2>
+          </div>
+          <ul class="turn-list">${summary}</ul>
+        </div>
+      `
+          : ""
+      }
+      <div class="panel">
+        <div class="panel__head">
+          <h2 class="panel__title">لوحة النقاط</h2>
+        </div>
+        <table class="scoreboard">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>اللاعب</th>
+              <th>هالجولة</th>
+              <th>المجموع</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${scoreboardRows(game, true)}
+          </tbody>
+        </table>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn--primary btn--lg" data-action="next-round">
+          الجولة التالية
+        </button>
+        <button class="btn btn--outline btn--lg" data-action="new-game">
+          لعبة جديدة
+        </button>
+      </div>
+    </section>
+  `);
+}
+
+function nextRound() {
+  const game = state.game;
+  game.round += 1;
+  startRound();
+}
+
+function newGame() {
+  if (timerHandle) {
+    clearInterval(timerHandle);
+    timerHandle = null;
+  }
+  state.game = null;
+  state.screen = "setup";
+  render();
+}
+
+/* --------------------------------------------------------------------------
+   Router
+   -------------------------------------------------------------------------- */
+
+function render() {
+  if (!root) return;
+  const update = () => {
+    root.innerHTML = "";
+    let view;
+    switch (state.screen) {
+      case "setup":
+        view = screenSetup();
+        break;
+      case "reveal":
+        view = screenReveal();
+        break;
+      case "discussion":
+        view = screenDiscussion();
+        break;
+      case "vote":
+        view =
+          state.game.voteStage === "cover" ? screenVoteCover() : screenVote();
+        break;
+      case "guess":
+        view =
+          state.game.guessStage === "cover" ? screenGuessCover() : screenGuess();
+        break;
+      case "results":
+        view = screenResults();
+        break;
+      case "title":
+      default:
+        view = screenTitle();
+        break;
+    }
+    root.appendChild(view);
+    if (state.screen === "setup") refreshSetupControls();
+    if (state.screen === "discussion") updateTimerDisplay();
+    window.scrollTo(0, 0);
+  };
+  if (document.startViewTransition) {
+    document.startViewTransition(update);
+  } else {
+    update();
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Events
+   -------------------------------------------------------------------------- */
+
+document.addEventListener("click", (event) => {
+  const trigger = event.target.closest("[data-action]");
+  if (!trigger) return;
+  const action = trigger.getAttribute("data-action");
+
+  switch (action) {
+    case "toggle-theme":
+      haptic();
+      toggleTheme();
+      break;
+    case "go-setup":
+      haptic();
+      state.screen = "setup";
+      render();
+      break;
+    case "go-title":
+      haptic();
+      captureSetupForm();
+      saveSetup();
+      state.screen = "title";
+      render();
+      break;
+    case "player-add":
+      haptic();
+      captureSetupForm();
+      if (playerCount() < GAME_DEFAULTS.maxPlayers) {
+        state.setup.names.push("");
+        saveSetup();
+        render();
+      }
+      break;
+    case "player-remove":
+      haptic();
+      captureSetupForm();
+      if (playerCount() > GAME_DEFAULTS.minPlayers) {
+        const index = Number(trigger.dataset.index);
+        state.setup.names.splice(index, 1);
+        saveSetup();
+        render();
+      }
+      break;
+    case "toggle-category": {
+      haptic();
+      captureSetupForm();
+      const id = trigger.dataset.id;
+      const at = state.setup.categoryIds.indexOf(id);
+      if (at >= 0) state.setup.categoryIds.splice(at, 1);
+      else state.setup.categoryIds.push(id);
+      saveSetup();
+      trigger.setAttribute(
+        "aria-pressed",
+        at >= 0 ? "false" : "true"
+      );
+      refreshSetupControls();
+      break;
+    }
+    case "out-set":
+      if (!trigger.disabled) {
+        haptic();
+        captureSetupForm();
+        state.setup.numOut = Number(trigger.dataset.value) === 2 ? 2 : 1;
+        saveSetup();
+        render();
+      }
+      break;
+    case "start-round":
+      haptic();
+      startGame();
+      break;
+    case "reveal-ready":
+      haptic();
+      if (state.game) {
+        state.game.revealStage = "card";
+        render();
+      }
+      break;
+    case "flip-card": {
+      if (!state.game || state.game.cardFlipped) break;
+      haptic();
+      const player = state.game.players[state.game.revealIndex];
+      const isOut = state.game.outIds.includes(player.id);
+      state.game.cardFlipped = true;
+      const back = trigger.querySelector(".flip-card__face--back");
+      if (back) back.innerHTML = cardBackHtml(isOut);
+      trigger.classList.add("is-flipped");
+      const done = document.getElementById("reveal-done");
+      if (done) done.hidden = false;
+      break;
+    }
+    case "reveal-done":
+      haptic();
+      advanceReveal();
+      break;
+    case "turn-next":
+      haptic();
+      advanceTurn();
+      break;
+    case "go-vote":
+      haptic();
+      startVoting();
+      break;
+    case "vote-ready":
+      haptic();
+      state.game.voteStage = "vote";
+      render();
+      break;
+    case "vote-select": {
+      haptic();
+      state.game.voteSelection = trigger.dataset.target;
+      document
+        .querySelectorAll('[data-action="vote-select"]')
+        .forEach((option) =>
+          option.setAttribute(
+            "aria-pressed",
+            option === trigger ? "true" : "false"
+          )
+        );
+      const confirm = document.getElementById("vote-confirm");
+      if (confirm) confirm.disabled = false;
+      break;
+    }
+    case "vote-confirm":
+      if (state.game.voteSelection) {
+        haptic();
+        state.game.votes[state.game.players[state.game.voteIndex].id] =
+          state.game.voteSelection;
+        advanceVote();
+      }
+      break;
+    case "guess-ready":
+      haptic();
+      state.game.guessStage = "guess";
+      render();
+      break;
+    case "guess-submit": {
+      haptic();
+      const input = document.getElementById("guess-input");
+      state.game.guesses[state.game.players[state.game.guessIndex].id] =
+        input ? input.value : "";
+      advanceGuess();
+      break;
+    }
+    case "guess-skip":
+      haptic();
+      advanceGuess();
+      break;
+    case "next-round":
+      haptic();
+      nextRound();
+      break;
+    case "new-game":
+      haptic();
+      newGame();
+      break;
+    case "share-results":
+      shareResults();
+      break;
+    case "copy-scoreboard":
+      copyScoreboard();
+      break;
+    default:
+      break;
+  }
+});
+
+document.addEventListener("input", (event) => {
+  const field = event.target.dataset ? event.target.dataset.field : null;
+  if (field === "player-name") {
+    const index = Number(event.target.dataset.index);
+    if (!Number.isNaN(index)) state.setup.names[index] = event.target.value;
+    saveSetup();
+    refreshSetupControls();
+  } else if (field === "per-question-seconds") {
+    const value = Number(event.target.value);
+    state.setup.perQuestionSeconds = Number.isFinite(value)
+      ? Math.max(0, Math.min(300, value))
+      : GAME_DEFAULTS.perQuestionSeconds;
+    saveSetup();
+  }
+});
+
+/* --------------------------------------------------------------------------
+   Share + Clipboard
+   -------------------------------------------------------------------------- */
+
+function shareResults() {
+  haptic();
+  const game = state.game;
+  if (!game) return;
+  const outNames = game.outIds.map(maskName).join("، ");
+  const text =
+    "برا السالفة — الجولة " +
+    game.round +
+    "\nبرا السالفة كانوا: " +
+    outNames +
+    "\nالسر: " +
+    (game.secret ? game.secret.item : "؟");
+  if (navigator.share) {
+    navigator.share({ title: "برا السالفة", text, url: location.href }).catch(function () {});
+  } else {
+    copyToClipboard(text);
+  }
+}
+
+function copyScoreboard() {
+  haptic();
+  const game = state.game;
+  if (!game) return;
+  var rows = game.players
+    .slice()
+    .sort(function (a, b) { return b.score - a.score; })
+    .map(function (p, i) { return (i + 1) + ". " + p.name + ": " + p.score; })
+    .join("\n");
+  var text = "برا السالفة — لوحة النقاط\n" + rows;
+  copyToClipboard(text);
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function () {
+      showToast("تم النسخ");
+    }).catch(function () {
+      showToast("ما اتنسخ");
+    });
+  } else {
+    showToast("ما اتنسخ");
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Offline detection
+   -------------------------------------------------------------------------- */
+
+function setupOfflineDetection() {
+  if (typeof navigator === "undefined" || !window.addEventListener) return;
+  var banner = document.getElementById("offline-banner");
+  if (!banner) return;
+  function update() {
+    if (navigator.onLine) {
+      banner.classList.remove("is-visible");
+    } else {
+      banner.classList.add("is-visible");
+    }
+  }
+  window.addEventListener("online", update);
+  window.addEventListener("offline", update);
+  update();
+}
+
+/* --------------------------------------------------------------------------
+   Splash screen
+   -------------------------------------------------------------------------- */
+
+function hideSplash() {
+  var splash = document.getElementById("splash");
+  if (!splash) return;
+  splash.classList.add("is-hidden");
+  setTimeout(function () {
+    if (splash.parentNode) splash.parentNode.removeChild(splash);
+  }, 500);
+}
+
+/* --------------------------------------------------------------------------
+   Debug hooks (safe to inspect from the browser console)
+   -------------------------------------------------------------------------- */
+
+window.__barra = {
+  get state() {
+    return state;
+  },
+  pickSecretItem,
+  saveSetup,
+  loadSetup,
+  pickOutPlayers,
+  buildTurnOrder,
+  debugSimulateFairness,
+  runFairnessSelfCheck,
+};
+
+/* --------------------------------------------------------------------------
+   Init
+   -------------------------------------------------------------------------- */
+
+function init() {
+  root = document.getElementById("app");
+  loadTheme();
+  loadSetup();
+  runFairnessSelfCheck();
+  render();
+  setupOfflineDetection();
+
+  /* Hide splash after a short delay */
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () {
+      setTimeout(hideSplash, 400);
+    });
+  } else {
+    setTimeout(hideSplash, 800);
+  }
+
+  /* SW update notification */
+  if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      location.reload();
+    });
+    navigator.serviceWorker.ready.then(function (reg) {
+      if (reg.active) {
+        reg.addEventListener("updatefound", function () {
+          showToast("تحديث متاح — يُطبّق عند الإغلاق");
+        });
+      }
+    }).catch(function () {});
+  }
+}
+
+init();
+  </script>
+
+  <script>
+(function () {
+  function check() {
+    var app = document.getElementById("app");
+    if (app && app.children.length === 0) {
+      if (window.__barraShowBootError) {
+        window.__barraShowBootError(
+          "ما وصل كود اللعبة. جرّب تفتح الملف بمتصفح ثاني مثل Firefox."
+        );
+      }
+    }
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", check);
+  } else {
+    setTimeout(check, 200);
+  }
+})();
+  </script>
+</body>
+</html>
